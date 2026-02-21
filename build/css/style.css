@@ -10,6 +10,97 @@
   padding: 1.5rem 0;
 }
 
+/* ... existing styles ... */
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  /* gap-3 */
+  width: 100%;
+  padding: 1rem 0;
+  /* py-4 */
+  border-radius: 1rem;
+  /* rounded-2xl */
+  font-weight: 700;
+  /* font-bold */
+  color: white;
+  transition: all 0.2s;
+}
+
+.quran-font {
+  font-family: 'Amiri Quran', serif;
+  line-height: 2.5;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f1a19;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2dd4bf;
+  border-radius: 10px;
+}
+
+#shareModal {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* When active, show overlay */
+#shareModal.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* The actual box inside scaling up/down */
+#shareModal>div {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.9);
+}
+
+#shareModal.active>div {
+  transform: scale(1);
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 0;
+  border-radius: 1rem;
+  font-weight: 700;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.share-btn:active {
+  transform: scale(0.96);
+}
+
+#shareCanvas {
+  display: none;
+}
+
+.share-btn:active {
+  transform: scale(0.95);
+  /* active:scale-95 */
+}
+
+.share-btn ion-icon {
+  font-size: 1.5rem;
+  /* text-2xl */
+}
+
+
 /* Background & Global Styles */
 body {
   background: radial-gradient(circle at top right, #1a2e2c, #0b1413);

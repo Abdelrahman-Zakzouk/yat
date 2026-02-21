@@ -124,6 +124,7 @@ function toggleTafsir() {
 }
 
 // --- 5. IMAGE GENERATION (CANVAS) ---
+// --- UPDATED IMAGE GENERATION & MODAL OPEN ---
 function shareAsImage() {
   const canvas = document.getElementById('shareCanvas');
   const ctx = canvas.getContext('2d');
@@ -133,21 +134,20 @@ function shareAsImage() {
   canvas.width = 1080;
   canvas.height = 1080;
 
-  // 1. Draw Background
+  // Background & Border
   ctx.fillStyle = '#1a2e2c';
   ctx.fillRect(0, 0, 1080, 1080);
   ctx.strokeStyle = '#2dd4bf';
   ctx.lineWidth = 20;
   ctx.strokeRect(40, 40, 1000, 1000);
 
-  // 2. Dynamic Font Scaling Logic
-  let fontSize = 60; // Starting font size
+  // Scaling Logic
+  let fontSize = 60;
   let lineHeight = fontSize * 1.5;
   let lines = [];
   const maxWidth = 850;
-  const maxHeight = 750; // Maximum vertical space for the verse
+  const maxHeight = 750;
 
-  // Loop to shrink font size if text is too long
   while (fontSize > 20) {
     ctx.font = `${fontSize}px "Amiri Quran", serif`;
     lines = [];
@@ -159,21 +159,15 @@ function shareAsImage() {
       if (ctx.measureText(testLine).width > maxWidth) {
         lines.push(currentLine);
         currentLine = word + ' ';
-      } else {
-        currentLine = testLine;
-      }
+      } else { currentLine = testLine; }
     });
     lines.push(currentLine);
 
-    // Check if the total height fits in the box
-    if (lines.length * (fontSize * 1.5) <= maxHeight) {
-      break;
-    }
+    if (lines.length * (fontSize * 1.5) <= maxHeight) break;
     fontSize -= 5;
     lineHeight = fontSize * 1.5;
   }
 
-  // 3. Draw the Verses (Centered Vertically)
   ctx.fillStyle = 'white';
   ctx.textAlign = 'center';
   ctx.direction = 'rtl';
@@ -186,18 +180,44 @@ function shareAsImage() {
     y += lineHeight;
   });
 
-  // 4. Draw Chapter Name below the text
   ctx.fillStyle = '#2dd4bf';
   ctx.font = '40px "Amiri", serif';
-  ctx.fillText(chapterText, 540, y + 40);
+  ctx.fillText(chapterText, 540, y + 60);
 
-  // 5. Branding at bottom
   ctx.font = 'italic 25px "Rakkas"';
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.fillText('تطبيق يتلو | Yatlo Quran', 540, 1020);
 
+  // SET IMAGE AND FADE IN
   document.getElementById('previewImage').src = canvas.toDataURL();
-  document.getElementById('shareModal').classList.remove('hidden');
+  const modal = document.getElementById('shareModal');
+  modal.classList.remove('hidden'); // Ensure display is flex/block
+  modal.classList.add('flex');
+
+  // Slight delay to allow browser to register the display change before animating opacity
+  setTimeout(() => modal.classList.add('active'), 10);
+}
+
+// --- UPDATED CLOSE MODAL ---
+function closeModal() {
+  const modal = document.getElementById('shareModal');
+  modal.classList.remove('active');
+
+  // Wait for animation to finish (300ms) before setting display none
+  setTimeout(() => {
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+  }, 300);
+}
+
+// --- FIXED SURAH BUTTON ---
+function goToSurah() {
+  if (currentSurahNumber) {
+    // Redirecting to Surah.html with the current surah ID as a query parameter
+    window.location.href = `/build/surah.html?surah=${currentSurahNumber}`;
+  } else {
+    showToast("يرجى اختيار سورة أولاً");
+  }
 }
 
 // --- 6. NATIVE SHARING & CLIPBOARD ---
@@ -248,7 +268,8 @@ function showToast(message) {
   setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
 
-function closeModal() { document.getElementById('shareModal').classList.add('hidden'); }
+// // function closeModal() { document.getElementById('shareModal').classList.remove('flex'); }
+// function closeModal() { document.getElementById('shareModal').classList.add('hidden'); }
 function downloadFromPreview() {
   const a = document.createElement('a'); a.download = 'yatlo_verse.png';
   a.href = document.getElementById('previewImage').src; a.click();
