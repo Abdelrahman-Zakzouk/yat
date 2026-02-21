@@ -10,7 +10,54 @@
     href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
     rel="stylesheet" />
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <link rel="stylesheet" href="build/css/style.css">
+  <style>
+    .quran-font {
+      font-family: 'Amiri Quran', serif;
+      line-height: 2.5;
+    }
+
+    #shareCanvas {
+      display: none;
+    }
+
+    /* MODAL ANIMATION */
+    #shareModal {
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    #shareModal.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #shareModal>div {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform: scale(0.9);
+    }
+
+    #shareModal.active>div {
+      transform: scale(1);
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 1rem 0;
+      border-radius: 1rem;
+      font-weight: 700;
+      color: white;
+      transition: all 0.2s;
+    }
+
+    .share-btn:active {
+      transform: scale(0.96);
+    }
+  </style>
 </head>
 
 <body class="min-h-screen bg-[#0f1a19] text-slate-200 font-medium">
@@ -25,6 +72,20 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-6 py-12 lg:py-24">
+
+    <div class="flex justify-center mb-12">
+      <div class="bg-[#162927] p-1 rounded-full border border-teal-800/50 flex items-center relative w-64 h-12">
+        <div id="toggleBg"
+          class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-teal-600 rounded-full transition-all duration-300 shadow-lg">
+        </div>
+        <button onclick="setMode('daily')" class="relative z-10 flex-1 text-sm font-bold transition-colors duration-300"
+          id="btn-daily">آية اليوم</button>
+        <button onclick="setMode('random')"
+          class="relative z-10 flex-1 text-sm font-bold text-slate-500 transition-colors duration-300"
+          id="btn-random">آية عشوائية</button>
+      </div>
+    </div>
+
     <div
       class="flex flex-wrap items-center justify-center gap-3 mb-10 bg-[#162927]/50 p-4 rounded-2xl border border-teal-800/30 relative">
       <div class="relative flex items-center gap-2">
@@ -55,7 +116,6 @@
       </div>
       <div
         class="relative bg-[#1a2e2c] border border-teal-800/50 rounded-3xl p-8 md:p-16 flex flex-col items-center shadow-2xl">
-
         <p id="verse" class="quran-font text-3xl md:text-4xl text-center mb-10 text-white"></p>
 
         <div id="audioBtn" style="display:none;" class="flex flex-wrap items-center justify-center gap-4 mb-8">
@@ -102,40 +162,29 @@
     </section>
   </main>
 
-  <div id="shareModal"
-    class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+  <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
     <div class="bg-[#1a2e2c] border border-teal-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl">
-
       <img id="previewImage" class="w-full rounded-xl mb-6 shadow-lg border border-teal-700/30">
-
       <div class="flex flex-col gap-3">
-
         <button onclick="shareTo('whatsapp')" class="share-btn bg-[#25D366]">
-          <ion-icon name="logo-whatsapp"></ion-icon>
-          <span>واتساب</span>
+          <ion-icon name="logo-whatsapp"></ion-icon><span>واتساب</span>
         </button>
-
         <button onclick="shareTo('native')"
           class="share-btn bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045]">
-          <ion-icon name="logo-instagram"></ion-icon>
-          <span>إنستجرام / ستوري</span>
+          <ion-icon name="logo-instagram"></ion-icon><span>إنستجرام / ستوري</span>
         </button>
-
         <button onclick="copyToClipboard()" class="share-btn bg-[#1877F2]">
-          <ion-icon name="copy-outline"></ion-icon>
-          <span>نسخ للفيسبوك</span>
+          <ion-icon name="copy-outline"></ion-icon><span>نسخ للفيسبوك</span>
         </button>
-
-        <button onclick="closeModal()" class="mt-2 py-2 text-slate-400 hover:text-white transition-colors">
-          إغلاق
-        </button>
+        <button onclick="closeModal()"
+          class="mt-2 py-2 text-slate-400 hover:text-white transition-colors">إغلاق</button>
       </div>
     </div>
   </div>
+
   <div id="toast"
     class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-[200] flex items-center gap-2">
-    <ion-icon name="checkmark-circle"></ion-icon>
-    <span id="toastMessage">تم النسخ!</span>
+    <ion-icon name="checkmark-circle"></ion-icon><span id="toastMessage"></span>
   </div>
 
   <canvas id="shareCanvas"></canvas>

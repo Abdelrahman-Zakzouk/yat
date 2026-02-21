@@ -2,6 +2,13 @@ let currentSurahNumber = null;
 let currentVerseKey = null;
 let currentAudio = new Audio();
 let allSurahs = [];
+let isRandomMode = false;
+
+// 1. MANAGE DAILY VERSES (Update this list manually)
+const DAILY_VERSES = {
+  "2026-02-21": "2:255", // Today
+  "2026-02-22": "24:35", // Tomorrow
+};
 
 // --- 1. INITIALIZATION ---
 async function initSurahData() {
@@ -9,12 +16,53 @@ async function initSurahData() {
     const res = await fetch('https://api.quran.com/api/v4/chapters?language=ar');
     const data = await res.json();
     allSurahs = data.chapters;
-    // Load a random verse on start
-    generateNewVerse();
+
+    // Default to Daily Mode on start
+    setMode('daily');
   } catch (e) {
     console.error("Error loading Surahs", e);
     showToast("خطأ في الاتصال بالخادم");
   }
+}
+
+// --- MODE TOGGLING (FIXED HIGHLIGHTS) ---
+function setMode(mode) {
+  const toggleBg = document.getElementById('toggleBg');
+  const btnDaily = document.getElementById('btn-daily');
+  const btnRandom = document.getElementById('btn-random');
+
+  if (mode === 'daily') {
+    isRandomMode = false;
+    // Move background to the right (Arabic RTL) or left depending on your layout
+    // If your "Daily" is on the right side of the toggle:
+    toggleBg.style.right = '4px';
+
+    // Update Text Colors
+    btnDaily.classList.remove('text-slate-500');
+    btnDaily.classList.add('text-white');
+
+    btnRandom.classList.remove('text-white');
+    btnRandom.classList.add('text-slate-500');
+
+    fetchVerseByKey(getDailyVerseKey());
+  } else {
+    isRandomMode = true;
+    toggleBg.style.right = '50%';
+
+    // Update Text Colors
+    btnRandom.classList.remove('text-slate-500');
+    btnRandom.classList.add('text-white');
+
+    btnDaily.classList.remove('text-white');
+    btnDaily.classList.add('text-slate-500');
+
+    generateNewVerse();
+  }
+}
+
+function getDailyVerseKey() {
+  const today = new Date().toISOString().split('T')[0];
+  return DAILY_VERSES[today] || "2:255"; // Default if date not found
 }
 
 // --- 2. SEARCH & NAVIGATION ---
@@ -49,11 +97,13 @@ function searchVerse() {
   fetchVerseByKey(`${surahId}:${ayahId}`);
 }
 
-// --- 3. CORE FETCH LOGIC ---
+// --- 3. CORE FETCH LOGIC (FIXED) ---
 function fetchVerseByKey(verseKey) {
   const verseEl = document.getElementById('verse');
   verseEl.style.opacity = '0.3';
   currentAudio.pause();
+
+  // Reset Tafsir and Audio UI on every new verse
   document.getElementById('tafsirPanel').classList.add('hidden');
   resetAudioUI();
 
@@ -80,16 +130,22 @@ function fetchVerseByKey(verseKey) {
 }
 
 function generateNewVerse() {
+  // Only fetch a random one if we are in Random Mode
+  if (!isRandomMode) {
+    setMode('random');
+    return;
+  }
   fetch('https://api.quran.com/api/v4/verses/random').then(res => res.json())
     .then(data => fetchVerseByKey(data.verse.verse_key));
 }
 
-// --- 4. AUDIO & TAFSIR ---
+// --- 4. AUDIO & TAFSIR (RESTORED) ---
 function loadRecitation() {
   const status = document.getElementById('audioStatus');
   const reciterId = document.getElementById('reciterSelect').value;
   document.getElementById('audioBtn').style.display = 'flex';
   status.innerText = "جاري التحميل...";
+
   const [s, a] = currentVerseKey.split(':');
   currentAudio.src = `https://everyayah.com/data/${reciterId}/${s.padStart(3, '0')}${a.padStart(3, '0')}.mp3`;
   currentAudio.oncanplaythrough = () => status.innerText = "استماع";
@@ -115,16 +171,20 @@ function resetAudioUI() {
 function toggleTafsir() {
   const panel = document.getElementById('tafsirPanel');
   if (!panel.classList.contains('hidden')) { panel.classList.add('hidden'); return; }
-  document.getElementById('tafsirContent').innerText = "جاري التحميل...";
+
+  const content = document.getElementById('tafsirContent');
+  content.innerText = "جاري التحميل...";
   panel.classList.remove('hidden');
+
   fetch(`https://api.quran.com/api/v4/tafsirs/16/by_ayah/${currentVerseKey}`)
-    .then(res => res.json()).then(data => {
-      document.getElementById('tafsirContent').innerText = data.tafsir.text.replace(/<[^>]*>?/gm, '');
-    });
+    .then(res => res.json())
+    .then(data => {
+      content.innerText = data.tafsir.text.replace(/<[^>]*>?/gm, '');
+    })
+    .catch(() => content.innerText = "تعذر تحميل التفسير");
 }
 
 // --- 5. IMAGE GENERATION (CANVAS) ---
-// --- UPDATED IMAGE GENERATION & MODAL OPEN ---
 function shareAsImage() {
   const canvas = document.getElementById('shareCanvas');
   const ctx = canvas.getContext('2d');
@@ -134,14 +194,12 @@ function shareAsImage() {
   canvas.width = 1080;
   canvas.height = 1080;
 
-  // Background & Border
   ctx.fillStyle = '#1a2e2c';
   ctx.fillRect(0, 0, 1080, 1080);
   ctx.strokeStyle = '#2dd4bf';
   ctx.lineWidth = 20;
   ctx.strokeRect(40, 40, 1000, 1000);
 
-  // Scaling Logic
   let fontSize = 60;
   let lineHeight = fontSize * 1.5;
   let lines = [];
@@ -188,32 +246,24 @@ function shareAsImage() {
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.fillText('تطبيق يتلو | Yatlo Quran', 540, 1020);
 
-  // SET IMAGE AND FADE IN
   document.getElementById('previewImage').src = canvas.toDataURL();
   const modal = document.getElementById('shareModal');
-  modal.classList.remove('hidden'); // Ensure display is flex/block
+  modal.classList.remove('hidden');
   modal.classList.add('flex');
-
-  // Slight delay to allow browser to register the display change before animating opacity
   setTimeout(() => modal.classList.add('active'), 10);
 }
 
-// --- UPDATED CLOSE MODAL ---
 function closeModal() {
   const modal = document.getElementById('shareModal');
   modal.classList.remove('active');
-
-  // Wait for animation to finish (300ms) before setting display none
   setTimeout(() => {
     modal.classList.remove('flex');
     modal.classList.add('hidden');
   }, 300);
 }
 
-// --- FIXED SURAH BUTTON ---
 function goToSurah() {
   if (currentSurahNumber) {
-    // Redirecting to Surah.html with the current surah ID as a query parameter
     window.location.href = `/build/surah.html?surah=${currentSurahNumber}`;
   } else {
     showToast("يرجى اختيار سورة أولاً");
@@ -226,7 +276,6 @@ async function shareTo(platform) {
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], 'yatlo-verse.png', { type: 'image/png' });
 
-  // Priority 1: Native Share (Works like "injection" on Mobile)
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
@@ -236,7 +285,6 @@ async function shareTo(platform) {
       });
     } catch (err) { console.log("Share canceled"); }
   }
-  // Priority 2: Clipboard + Open WhatsApp (Desktop Fallback)
   else {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
@@ -251,25 +299,22 @@ async function shareTo(platform) {
   }
 }
 
-async function copyImageOnly() {
-  const canvas = document.getElementById('shareCanvas');
-  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-  try {
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-    showToast("✅ تم نسخ الصورة! يمكنك لصقها الآن");
-  } catch (err) { showToast("المتصفح لا يدعم النسخ"); }
-}
-
-// --- 7. UTILS ---
+// --- 7. UTILS (FIXED TOAST) ---
 function showToast(message) {
   const toast = document.getElementById('toast');
-  document.getElementById('toastMessage').innerText = message;
-  toast.classList.replace('opacity-0', 'opacity-100');
-  setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
+  const msgEl = document.getElementById('toastMessage');
+  msgEl.innerText = message;
+
+  // Correctly handling Tailwind's opacity classes
+  toast.classList.remove('opacity-0');
+  toast.classList.add('opacity-100');
+
+  setTimeout(() => {
+    toast.classList.remove('opacity-100');
+    toast.classList.add('opacity-0');
+  }, 3000);
 }
 
-// // function closeModal() { document.getElementById('shareModal').classList.remove('flex'); }
-// function closeModal() { document.getElementById('shareModal').classList.add('hidden'); }
 function downloadFromPreview() {
   const a = document.createElement('a'); a.download = 'yatlo_verse.png';
   a.href = document.getElementById('previewImage').src; a.click();
@@ -281,5 +326,4 @@ document.addEventListener('click', e => {
 });
 currentAudio.onended = resetAudioUI;
 
-// Start the app
 initSurahData();

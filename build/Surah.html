@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="css/surah.css" />
 </head>
 
-
 <body class="bg-[#f8f9fa]">
 
     <div class="surah-layout-container">
@@ -41,7 +40,7 @@
         // Your existing JS logic remains the same
         const params = new URLSearchParams(window.location.search);
         const surahNumber = params.get("surah");
-        if (!surahNumber) { window.location.href = 'index.html'; } else { loadSurah(surahNumber); }
+        if (!surahNumber) { window.location.href = '/index.html'; } else { loadSurah(surahNumber); }
 
         function loadSurah(number) {
             fetch(`https://api.quran.com/api/v4/verses/by_chapter/${number}?language=ar&fields=text_uthmani&per_page=300`)
@@ -68,7 +67,7 @@
                     document.title = "سورة " + ch.name_arabic;
                 });
         }
-        function goBack() { window.location.href = 'index.html'; }
+        function goBack() { window.location.href = '/index.html'; }
         function playFullSurah(number) {
             // Reciter 7 is Alafasy. This returns one long MP3 for the whole surah.
             fetch(`https://api.quran.com/api/v4/chapter_recitations/7/${number}`)
