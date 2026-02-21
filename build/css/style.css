@@ -1,0 +1,55 @@
+/* Typography - Enhanced for Arabic Calligraphy */
+.quran-font {
+  font-family: "Amiri Quran", serif;
+  font-weight: 400;
+  /* Fixed collision: 3.5 is the golden ratio for Uthmani script */
+  line-height: 2.2 !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  text-wrap: balance;
+  direction: rtl;
+  padding: 1.5rem 0;
+}
+
+/* Background & Global Styles */
+body {
+  background: radial-gradient(circle at top right, #1a2e2c, #0b1413);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+/* Scrollbar Polish */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f1a19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #14b8a6;
+  border-radius: 10px;
+}
+
+/* Custom Selection */
+::selection {
+  background: #14b8a6;
+  color: white;
+}
+
+/* Animation for Verse Loading */
+.fade-in {
+  animation: fadeIn 0.8s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
