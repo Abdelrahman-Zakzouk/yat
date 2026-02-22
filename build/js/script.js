@@ -67,11 +67,9 @@ async function fetchVerseNote(verseKey) {
       .maybeSingle();
 
     if (data?.note_text?.trim()) {
-      // Internal title updated to "هدايات الآية"
-      // Outer headers should be removed from your HTML template
       noteContent.innerHTML = `
         <div class="lesson-container fade-in">
-            <span class="lesson-title">✦ هدايات الآية:</span>
+            <span class="lesson-title">هدايات الآية:</span>
             <p class="lesson-text">${safeFilter(data.note_text)}</p>
         </div>
       `;
@@ -194,9 +192,6 @@ function goToSurah() {
 
 // --- 4. CORE FETCHING & KHATMA BRIDGE ---
 
-/**
- * BRIDGE: Syncs current reading progress with the Khatma Journey.
- */
 async function syncKhatmaProgress(verseKey) {
   try {
     const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}`);
@@ -206,7 +201,7 @@ async function syncKhatmaProgress(verseKey) {
     await sbClient.from('khatma_progress')
       .update({ last_verse_key: verseKey, completed_verses: verseIndex })
       .eq('is_active', true);
-  } catch (e) { /* Silent fail if no active journey */ }
+  } catch (e) { }
 }
 
 function fetchVerseByKey(verseKey) {
@@ -236,7 +231,7 @@ function fetchVerseByKey(verseKey) {
       }
       loadRecitation();
       fetchVerseNote(currentVerseKey);
-      syncKhatmaProgress(currentVerseKey); // Sync Journey
+      syncKhatmaProgress(currentVerseKey);
     })
     .catch(() => showToast("تعذر تحميل الآية"));
 }
@@ -424,11 +419,68 @@ function showToast(message) {
   setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
 
-// Auto-load verse if coming from Khatma dashboard
 window.onload = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const verseParam = urlParams.get('verse');
   if (verseParam) fetchVerseByKey(verseParam);
 };
+
+// --- 8. UI EVENT LISTENERS & ADMIN ACCESS ---
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Using the ID from your HTML: btn-daily
+  const dailyBtn = document.getElementById('btn-daily');
+  const randomBtn = document.getElementById('btn-random');
+
+  // ADMIN REDIRECT LOGIC (4s Hold on btn-daily)
+  let holdTimer;
+  if (dailyBtn) {
+    const startHold = (e) => {
+      // Prevent context menu on mobile long press
+      if (e.type === 'touchstart') {
+        holdTimer = setTimeout(() => {
+          window.location.href = "/build/html/admin.html";
+        }, 4000);
+      } else {
+        holdTimer = setTimeout(() => {
+          window.location.href = "/build/html/admin.html";
+        }, 4000);
+      }
+    };
+
+    const endHold = () => {
+      clearTimeout(holdTimer);
+    };
+
+    // Mouse events
+    dailyBtn.addEventListener('mousedown', startHold);
+    dailyBtn.addEventListener('mouseup', endHold);
+    dailyBtn.addEventListener('mouseleave', endHold);
+
+    // Touch events for mobile
+    dailyBtn.addEventListener('touchstart', startHold);
+    dailyBtn.addEventListener('touchend', endHold);
+  }
+
+  if (randomBtn) {
+    randomBtn.onclick = () => setMode('random');
+  }
+
+  const surahSearch = document.getElementById('surahSearch');
+  if (surahSearch) {
+    surahSearch.addEventListener('input', filterSurahs);
+    surahSearch.addEventListener('keydown', handleSurahKey);
+  }
+
+  const ayahInput = document.getElementById('ayahInput');
+  if (ayahInput) {
+    ayahInput.addEventListener('keydown', handleAyahKey);
+  }
+
+  const indexSearch = document.getElementById('indexSearch');
+  if (indexSearch) {
+    indexSearch.addEventListener('input', renderIndex);
+  }
+});
 
 initSurahData();
