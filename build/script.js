@@ -65,6 +65,61 @@ function getDailyVerseKey() {
   return DAILY_VERSES[today] || "2:255"; // Default if date not found
 }
 
+// --- SURAH INDEX LOGIC ---
+
+function openIndex() {
+  const modal = document.getElementById('indexModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  renderIndex(); // Load the list
+}
+
+function closeIndex() {
+  const modal = document.getElementById('indexModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function renderIndex() {
+  const grid = document.getElementById('indexGrid');
+  const query = document.getElementById('indexSearch').value.toLowerCase();
+
+  // Filter allSurahs based on search query
+  const filtered = allSurahs.filter(s =>
+    s.name_arabic.includes(query) ||
+    s.name_simple.toLowerCase().includes(query)
+  );
+
+  grid.innerHTML = filtered.map(s => `
+        <div onclick="selectFromIndex(${s.id})" 
+             class="bg-[#162927] border border-teal-900/50 p-4 rounded-2xl hover:border-teal-400 hover:bg-teal-900/30 cursor-pointer transition-all group">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-teal-600 text-xs font-bold">#${s.id}</span>
+                <span class="text-slate-500 text-[10px]">${s.verses_count} آية</span>
+            </div>
+            <div class="text-center">
+                <h3 class="text-xl font-['Amiri'] group-hover:text-teal-400 transition-colors">${s.name_arabic}</h3>
+                <p class="text-slate-500 text-xs mt-1 uppercase tracking-tighter">${s.name_simple}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function selectFromIndex(surahId) {
+  // 1. Set the internal inputs
+  document.getElementById('surahInput').value = surahId;
+  document.getElementById('ayahInput').value = 1; // Start at verse 1
+
+  // 2. Fetch the first verse of that surah
+  fetchVerseByKey(`${surahId}:1`);
+
+  // 3. Close the modal
+  closeIndex();
+
+  // 4. Scroll to top so user sees the verse
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // --- 2. SEARCH & NAVIGATION ---
 function filterSurahs() {
   const query = document.getElementById('surahSearch').value.trim();

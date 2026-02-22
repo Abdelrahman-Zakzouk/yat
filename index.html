@@ -66,14 +66,17 @@
     <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors" href="index.html">يتلو</a>
     <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
       <a href="#" class="hover:text-teal-400 transition">الرئيسية</a>
-      <a href="#" class="hover:text-teal-400 transition">الفهرس</a>
+      <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+        <a href="index.html" class="hover:text-teal-400 transition">الرئيسية</a>
+        <button onclick="openIndex()" class="hover:text-teal-400 transition">الفهرس</button>
+      </nav>
     </nav>
     <button class="text-teal-400 text-3xl md:hidden"><ion-icon name="menu-outline"></ion-icon></button>
   </header>
 
-  <main class="max-w-5xl mx-auto px-6 py-12 lg:py-24">
+  <main class="max-w-5xl mx-auto px-6 py-6 lg:py-6">
 
-    <div class="flex justify-center mb-12">
+    <div class="flex justify-center mb-6">
       <div class="bg-[#162927] p-1 rounded-full border border-teal-800/50 flex items-center relative w-64 h-12">
         <div id="toggleBg"
           class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-teal-600 rounded-full transition-all duration-300 shadow-lg">
@@ -185,6 +188,29 @@
   <div id="toast"
     class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-[200] flex items-center gap-2">
     <ion-icon name="checkmark-circle"></ion-icon><span id="toastMessage"></span>
+  </div>
+
+  <div id="indexModal"
+    class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/95 p-4 backdrop-blur-md">
+    <div
+      class="bg-[#1a2e2c] border border-teal-800 w-full max-w-4xl h-[80vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+
+      <div class="p-6 border-b border-teal-800/50 flex justify-between items-center bg-[#162927]">
+        <h2 class="text-2xl font-['Rakkas'] text-teal-400">فهرس السور</h2>
+        <button onclick="closeIndex()" class="text-slate-400 hover:text-white text-3xl">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="p-4 bg-[#162927]/50">
+        <input type="text" id="indexSearch" oninput="renderIndex()" placeholder="ابحث عن سورة..."
+          class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white focus:border-teal-400 outline-none">
+      </div>
+
+      <div id="indexGrid"
+        class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 custom-scrollbar">
+      </div>
+    </div>
   </div>
 
   <canvas id="shareCanvas"></canvas>
