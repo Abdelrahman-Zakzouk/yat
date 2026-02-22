@@ -1,0 +1,194 @@
+:root {
+    --bg-dark: #0b1211;
+    --card-bg: rgba(21, 36, 34, 0.6);
+    --teal-primary: #2dd4bf;
+    --teal-glow: rgba(45, 212, 191, 0.2);
+    --text-dim: #94a3b8;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: white;
+    font-family: 'Amiri', serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.khatma-wrapper {
+    width: 100%;
+    max-width: 450px;
+    padding: 40px 20px;
+}
+
+.journey-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.font-rakkas {
+    font-family: 'Rakkas', serif;
+    font-size: 3rem;
+    color: var(--teal-primary);
+    margin: 0;
+    text-shadow: 0 0 20px var(--teal-glow);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    margin-top: 5px;
+}
+
+/* Dashboard Card */
+.khatma-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(45, 212, 191, 0.1);
+    border-radius: 35px;
+    padding: 30px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.progress-section {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.progress-circle-svg {
+    width: 180px;
+    height: 180px;
+    transform: rotate(-90deg);
+}
+
+.progress-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 10;
+}
+
+.progress-bar {
+    fill: none;
+    stroke: var(--teal-primary);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.percentage-label {
+    position: absolute;
+    font-size: 2rem;
+    font-weight: bold;
+    font-family: 'sans-serif';
+    /* Keeps numbers clean */
+}
+
+/* Stats */
+.stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 25px;
+}
+
+.stat-box .val {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: white;
+    display: block;
+}
+
+.stat-box .lbl {
+    font-size: 0.85rem;
+    color: var(--teal-primary);
+    opacity: 0.8;
+}
+
+/* Actions */
+.journey-actions {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.action-btn {
+    padding: 16px;
+    border-radius: 18px;
+    border: none;
+    font-family: 'Amiri';
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.action-btn.primary {
+    background: var(--teal-primary);
+    color: #050808;
+    font-weight: bold;
+}
+
+.action-btn.secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: #111d1b;
+    padding: 40px 20px;
+    border-radius: 30px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    border: 1px solid var(--teal-glow);
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.opt-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 10px;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.opt-card .days {
+    font-size: 1.5rem;
+    display: block;
+    font-weight: bold;
+}
+
+.opt-card:hover {
+    border-color: var(--teal-primary);
+    background: var(--teal-glow);
+}
+
+.hidden {
+    display: none;
+}

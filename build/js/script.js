@@ -1,6 +1,6 @@
 /**
  * يتلو | Yatlo Quran - Unified Logic
- * Handles: Hamza Filtering, Supabase OTA Updates, Quran API, Audio, and Sharing
+ * Features: Hamza Filtering, Dynamic Canvas Scaling, Audio, and Search.
  */
 
 // --- GLOBAL STATE ---
@@ -15,42 +15,15 @@ const SUPABASE_URL = 'https://ruokjdtnpraaglmewjwa.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_GqCbpZBE9aT0Tv0AY3A_6Q_utNzCQA-';
 const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Global Override List for Hamza corrections
-const HAMZA_OVERRIDES = {
-  "النبإ": "النبأ",
-  "سبإ": "سبأ",
-  "الانسان": "الإنسان",
-  "الإنفطار": "الانفطار",
-  "الإنشقاق": "الانشقاق",
-};
-
-// --- 1. THE FILTERS (THE ENGINE) ---
-
-function applyHamzaFilter(data) {
-  if (typeof data === 'string') {
-    let corrected = data;
-    for (const [wrong, right] of Object.entries(HAMZA_OVERRIDES)) {
-      corrected = corrected.split(wrong).join(right);
-    }
-    return corrected;
-  } else if (Array.isArray(data)) {
-    return data.map(item => applyHamzaFilter(item));
-  } else if (typeof data === 'object' && data !== null) {
-    const cleaned = {};
-    for (const key in data) {
-      cleaned[key] = applyHamzaFilter(data[key]);
-    }
-    return cleaned;
-  }
-  return data;
+/**
+ * Applies global Hamza override filter to data strings.
+ * Note: This uses the override list remembered for hamza mistypes.
+ */
+function safeFilter(data) {
+  return (typeof applyHamzaFilter === 'function') ? applyHamzaFilter(data) : data;
 }
 
-// --- 2. AUDIO REACTIVITY ---
-
-/**
- * Event listeners ensure the UI is reactive. 
- * The icon updates automatically based on what the audio element is actually doing.
- */
+// --- 1. AUDIO REACTIVITY ---
 currentAudio.addEventListener('play', () => {
   const icon = document.getElementById('playIcon');
   if (icon) icon.setAttribute('name', 'pause-outline');
@@ -58,15 +31,8 @@ currentAudio.addEventListener('play', () => {
   if (status) status.innerText = "تشغيل...";
 });
 
-currentAudio.addEventListener('pause', () => {
-  resetAudioUI();
-});
-
-// Resets icon to Play if the source is changed mid-play
-currentAudio.addEventListener('emptied', () => {
-  resetAudioUI();
-});
-
+currentAudio.addEventListener('pause', resetAudioUI);
+currentAudio.addEventListener('emptied', resetAudioUI);
 currentAudio.onended = resetAudioUI;
 
 function resetAudioUI() {
@@ -76,15 +42,11 @@ function resetAudioUI() {
   if (status) status.innerText = "استماع";
 }
 
-// --- 3. INITIALIZATION & FETCHING ---
+// --- 2. INITIALIZATION & DATA ---
 
 async function fetchDailyVerseKey() {
   try {
-    const { data, error } = await sbClient
-      .from('site_config')
-      .select('verse_key')
-      .eq('id', 'daily_verse')
-      .maybeSingle();
+    const { data, error } = await sbClient.from('site_config').select('verse_key').eq('id', 'daily_verse').maybeSingle();
     return (error || !data) ? "2:255" : data.verse_key;
   } catch (e) { return "2:255"; }
 }
@@ -93,22 +55,12 @@ async function fetchVerseNote(verseKey) {
   const notePanel = document.getElementById('notePanel');
   const noteContent = document.getElementById('noteContent');
   if (!notePanel || !noteContent) return;
-
   try {
-    const { data } = await sbClient
-      .from('verse_notes')
-      .select('note_text')
-      .eq('verse_key', verseKey)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
+    const { data } = await sbClient.from('verse_notes').select('note_text').eq('verse_key', verseKey).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (data?.note_text?.trim()) {
-      noteContent.innerText = applyHamzaFilter(data.note_text);
+      noteContent.innerText = safeFilter(data.note_text);
       notePanel.classList.remove('hidden');
-    } else {
-      notePanel.classList.add('hidden');
-    }
+    } else { notePanel.classList.add('hidden'); }
   } catch (e) { notePanel.classList.add('hidden'); }
 }
 
@@ -116,51 +68,136 @@ async function initSurahData() {
   try {
     const res = await fetch('https://api.quran.com/api/v4/chapters?language=ar');
     const data = await res.json();
-    allSurahs = applyHamzaFilter(data.chapters);
-
+    allSurahs = safeFilter(data.chapters);
     const otaKey = await fetchDailyVerseKey();
     await setMode('daily', otaKey);
     renderIndex();
   } catch (e) { showToast("خطأ في تحميل البيانات"); }
 }
 
-// --- 4. NAVIGATION & MODE ---
+// --- 3. SEARCH & FULL SURAH NAVIGATION ---
 
-async function setMode(mode, otaKey = null) {
-  const toggleBg = document.getElementById('toggleBg');
-  const btnDaily = document.getElementById('btn-daily');
-  const btnRandom = document.getElementById('btn-random');
+/**
+ * Handles Enter key on Surah input: picks best match and moves to Ayah.
+ */
+function handleSurahKey(event) {
+  if (event.key === 'Enter') {
+    const query = event.target.value.trim();
+    if (!query) return;
 
-  if (mode === 'daily') {
-    isRandomMode = false;
-    if (toggleBg) { toggleBg.style.right = '4px'; toggleBg.style.left = 'auto'; }
-    btnDaily?.classList.replace('text-slate-500', 'text-white');
-    btnRandom?.classList.replace('text-white', 'text-slate-500');
-    const key = otaKey || await fetchDailyVerseKey();
-    fetchVerseByKey(key);
-  } else {
-    isRandomMode = true;
-    if (toggleBg) toggleBg.style.right = '50%';
-    btnRandom?.classList.replace('text-slate-500', 'text-white');
-    btnDaily?.classList.replace('text-white', 'text-slate-500');
-    generateNewVerse();
+    // Find the best match from our current surah list
+    const match = allSurahs.find(s =>
+      s.name_arabic.includes(query) ||
+      s.name_simple.toLowerCase().includes(query) ||
+      s.id.toString() === query
+    );
+
+    if (match) {
+      selectSurah(match.name_arabic, match.id);
+    } else {
+      showToast("⚠️ لم يتم العثور على السورة");
+    }
   }
 }
+
+/**
+ * Handles Enter key on Ayah input: validates and submits search.
+ */
+function handleAyahKey(event) {
+  if (event.key === 'Enter') {
+    const ayahVal = event.target.value.trim();
+    if (!ayahVal || parseInt(ayahVal) <= 0) {
+      showToast("⚠️ يرجى إدخال رقم آية صحيح");
+      return;
+    }
+    searchVerse();
+  }
+}
+
+// Handles browser history or clicking away for Surah names
+function handleAutofill(event) {
+  const query = event.target.value.trim();
+  if (!query) return;
+
+  const match = allSurahs.find(s =>
+    s.name_arabic === query ||
+    s.name_simple.toLowerCase() === query
+  );
+
+  if (match) {
+    selectSurah(match.name_arabic, match.id);
+  }
+}
+
+function filterSurahs() {
+  const query = document.getElementById('surahSearch')?.value.trim().toLowerCase();
+  const list = document.getElementById('surahList');
+  if (!query || !list) {
+    list?.classList.add('hidden');
+    return;
+  }
+
+  const matches = allSurahs.filter(s =>
+    s.name_arabic.includes(query) ||
+    s.name_simple.toLowerCase().includes(query) ||
+    s.id.toString() === query
+  ).slice(0, 10);
+
+  if (matches.length > 0) {
+    list.innerHTML = matches.map(s => `
+      <div onclick="selectSurah('${s.name_arabic}', ${s.id})" 
+           class="p-3 hover:bg-teal-800/50 cursor-pointer border-b border-teal-900/30 text-right text-sm text-white">
+        ${s.name_arabic} <span class="text-teal-600 text-xs">#${s.id}</span>
+      </div>`).join('');
+    list.classList.remove('hidden');
+  } else {
+    list.classList.add('hidden');
+  }
+}
+
+function selectSurah(name, id) {
+  const searchInput = document.getElementById('surahSearch');
+  const hiddenInput = document.getElementById('surahInput');
+  const ayahInput = document.getElementById('ayahInput');
+
+  if (searchInput) searchInput.value = name;
+  if (hiddenInput) hiddenInput.value = id;
+
+  document.getElementById('surahList')?.classList.add('hidden');
+
+  // Shift focus to Ayah input after valid selection
+  if (ayahInput) {
+    setTimeout(() => ayahInput.focus(), 50);
+  }
+}
+
+function searchVerse() {
+  const surahId = document.getElementById('surahInput')?.value;
+  const ayahId = document.getElementById('ayahInput')?.value;
+
+  if (!surahId) return showToast("⚠️ اختر السورة أولاً");
+  if (!ayahId) return showToast("⚠️ اختر الآية أولاً");
+
+  fetchVerseByKey(`${surahId}:${ayahId}`);
+  closeIndex();
+}
+
+// --- 4. CORE FETCHING ---
 
 function fetchVerseByKey(verseKey) {
   const verseEl = document.getElementById('verse');
   const chapterEl = document.getElementById('chapter');
+  if (!verseEl) return;
 
   verseEl.style.opacity = '0.3';
-  document.getElementById('tafsirPanel').classList.add('hidden');
+  document.getElementById('tafsirPanel')?.classList.add('hidden');
   currentAudio.pause();
 
   fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}?fields=text_uthmani`)
     .then(res => res.json())
     .then(data => {
-      const filteredData = applyHamzaFilter(data);
+      const filteredData = safeFilter(data);
       const verse = filteredData.verse;
-
       currentVerseKey = verse.verse_key;
       const [surahNum, verseNum] = currentVerseKey.split(':');
       currentSurahNumber = surahNum;
@@ -172,73 +209,39 @@ function fetchVerseByKey(verseKey) {
       if (chapterObj && chapterEl) {
         chapterEl.innerHTML = `سورة ${chapterObj.name_arabic} : آية ${verseNum}`;
       }
-
       loadRecitation();
       fetchVerseNote(currentVerseKey);
-    });
+    })
+    .catch(() => showToast("تعذر تحميل الآية"));
+}
+
+// --- 5. AUDIO & TAFSIR & MODE ---
+
+async function setMode(mode, otaKey = null) {
+  const toggleBg = document.getElementById('toggleBg');
+  if (mode === 'daily') {
+    isRandomMode = false;
+    if (toggleBg) { toggleBg.style.right = '4px'; toggleBg.style.left = 'auto'; }
+    const key = otaKey || await fetchDailyVerseKey();
+    fetchVerseByKey(key);
+  } else {
+    isRandomMode = true;
+    if (toggleBg) toggleBg.style.right = '50%';
+    generateNewVerse();
+  }
 }
 
 function generateNewVerse() {
   fetch('https://api.quran.com/api/v4/verses/random')
     .then(res => res.json())
-    .then(data => fetchVerseByKey(data.verse.verse_key))
-    .catch(() => showToast("تعذر جلب آية عشوائية"));
+    .then(data => fetchVerseByKey(data.verse.verse_key));
 }
-
-// --- 5. INDEX & SEARCH ---
-
-function renderIndex() {
-  const grid = document.getElementById('indexGrid');
-  if (!grid) return;
-  const query = document.getElementById('indexSearch').value.toLowerCase();
-  const filtered = allSurahs.filter(s =>
-    s.name_arabic.includes(query) || s.name_simple.toLowerCase().includes(query) || s.id.toString() === query
-  );
-
-  grid.innerHTML = filtered.map(s => `
-    <div onclick="selectFromIndex(${s.id})" class="bg-[#162927] border border-teal-900/50 p-4 rounded-2xl hover:border-teal-400 hover:bg-teal-900/30 cursor-pointer transition-all">
-        <div class="flex justify-between items-start mb-2">
-            <span class="text-teal-600 text-xs font-bold">#${s.id}</span>
-            <span class="text-slate-500 text-[10px]">${s.verses_count} آية</span>
-        </div>
-        <div class="text-center">
-            <h3 class="text-xl font-['Amiri']">${s.name_arabic}</h3>
-            <p class="text-slate-500 text-xs mt-1 uppercase tracking-tighter">${s.name_simple}</p>
-        </div>
-    </div>`).join('');
-}
-
-function openIndex() {
-  const modal = document.getElementById('indexModal');
-  modal.classList.replace('hidden', 'flex');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => modal.classList.add('active'), 10);
-  renderIndex();
-}
-
-function closeIndex() {
-  const modal = document.getElementById('indexModal');
-  modal.classList.remove('active');
-  document.body.style.overflow = 'auto';
-  setTimeout(() => modal.classList.replace('flex', 'hidden'), 300);
-}
-
-function selectFromIndex(surahId) {
-  window.location.href = `build/html/surah.html?surah=${surahId}`;
-}
-
-// --- 6. AUDIO & TAFSIR ---
 
 function loadRecitation() {
-  const status = document.getElementById('audioStatus');
   const reciterId = document.getElementById('reciterSelect').value;
-  if (status) status.innerText = "جاري...";
   if (!currentVerseKey) return;
-
   const [s, a] = currentVerseKey.split(':');
   currentAudio.src = `https://everyayah.com/data/${reciterId}/${s.padStart(3, '0')}${a.padStart(3, '0')}.mp3`;
-  currentAudio.oncanplaythrough = () => { if (status) status.innerText = "استماع"; };
-  currentAudio.load();
 }
 
 function toggleAudio() {
@@ -247,7 +250,9 @@ function toggleAudio() {
 
 function toggleTafsir() {
   const panel = document.getElementById('tafsirPanel');
+  if (!panel) return;
   if (!panel.classList.contains('hidden')) { panel.classList.add('hidden'); return; }
+
   const content = document.getElementById('tafsirContent');
   content.innerText = "جاري التحميل...";
   panel.classList.remove('hidden');
@@ -255,11 +260,11 @@ function toggleTafsir() {
   fetch(`https://api.quran.com/api/v4/tafsirs/16/by_ayah/${currentVerseKey}`)
     .then(res => res.json())
     .then(data => {
-      content.innerText = applyHamzaFilter(data).tafsir.text.replace(/<[^>]*>?/gm, '');
+      content.innerText = safeFilter(data).tafsir.text.replace(/<[^>]*>?/gm, '');
     });
 }
 
-// --- 7. SHARING (REWRITTEN) ---
+// --- 6. SHARING & CANVAS (Visual Match Update) ---
 
 async function shareAsImage() {
   const canvas = document.getElementById('shareCanvas');
@@ -269,38 +274,84 @@ async function shareAsImage() {
   const modal = document.getElementById('shareModal');
   const preview = document.getElementById('previewImage');
 
-  if (!verseText) return showToast("لا توجد آية للمشاركة");
-
   canvas.width = 1080; canvas.height = 1080;
-  ctx.fillStyle = '#0f1c1b';
+
+  // 1. BACKGROUND: Radial Gradient
+  const gradient = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
+  gradient.addColorStop(0, '#152422');
+  gradient.addColorStop(1, '#0b1211');
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 1080, 1080);
-  ctx.strokeStyle = '#2dd4bf33';
-  ctx.lineWidth = 40;
-  ctx.strokeRect(20, 20, 1040, 1040);
 
-  let fontSize = 65;
+  // 2. THE ROUNDED OUTLINE (10px thickness, 10px radius)
+  ctx.strokeStyle = '#2dd4bf';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.roundRect(30, 30, 1020, 1020, 10);
+  ctx.stroke();
+
   ctx.textAlign = 'center'; ctx.direction = 'rtl';
-  ctx.fillStyle = 'white'; ctx.font = `bold ${fontSize}px "Amiri", serif`;
 
-  let lines = [], words = verseText.split(' '), currentLine = '', maxWidth = 880;
-  words.forEach(word => {
-    let testLine = currentLine + word + ' ';
-    if (ctx.measureText(testLine).width > maxWidth) {
-      lines.push(currentLine); currentLine = word + ' ';
-    } else { currentLine = testLine; }
+  // 3. CHAPTER & VERSE (Top Position - Rakkas Font)
+  ctx.fillStyle = '#2dd4bf';
+  ctx.font = '42px "Amiri", serif';
+  ctx.fillText(chapterText, 540, 120);
+
+  // 4. DYNAMIC TEXT SCALING FOR VERSE
+  ctx.fillStyle = 'white';
+
+  let fontSize = 68;
+  let lines = [];
+  const maxWidth = 880;
+  const maxHeight = 700; // Constrained space to avoid overlapping footer
+
+  while (fontSize > 18) {
+    ctx.font = `bold ${fontSize}px "Amiri", serif`;
+    let currentLineHeight = fontSize * 1.5; // Proportional scaling
+    lines = [];
+    let words = verseText.split(' ');
+    let currentLine = '';
+
+    words.forEach(word => {
+      let testLine = currentLine + word + ' ';
+      if (ctx.measureText(testLine).width > maxWidth) {
+        lines.push(currentLine.trim());
+        currentLine = word + ' ';
+      } else {
+        currentLine = testLine;
+      }
+    });
+    lines.push(currentLine.trim());
+
+    if (lines.length * currentLineHeight <= maxHeight) break;
+    fontSize -= 2;
+  }
+
+  const finalLineHeight = fontSize * 1.5;
+  // Calculate balanced starting Y position
+  let y = 180 + (maxHeight - (lines.length * finalLineHeight)) / 2 + (finalLineHeight / 1.2);
+
+  ctx.font = `bold ${fontSize}px "Amiri", serif`;
+  lines.forEach(line => {
+    ctx.fillText(line, 540, y);
+    y += finalLineHeight;
   });
-  lines.push(currentLine);
 
-  let lineHeight = fontSize * 1.6;
-  let y = (1080 / 2) - ((lines.length * lineHeight) / 2) + fontSize;
-  lines.forEach(line => { ctx.fillText(line, 540, y); y += lineHeight; });
-
-  ctx.fillStyle = '#2dd4bf'; ctx.font = '45px "Amiri", serif';
-  ctx.fillText(chapterText, 540, y + 80);
+  // 5. BRANDING FOOTER (Bottom Position - Rakkas Font)
+  ctx.fillStyle = '#2dd4bf';
+  ctx.font = '30px "Rakkas", serif';
+  ctx.fillText('تطبيق يتلو | Yatlo Quran', 540, 1030);
 
   preview.src = canvas.toDataURL('image/png');
   modal.classList.replace('hidden', 'flex');
   setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeModal() {
+  const modal = document.getElementById('shareModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  setTimeout(() => modal.classList.replace('flex', 'hidden'), 300);
 }
 
 async function copyImageToClipboard() {
@@ -318,39 +369,52 @@ async function shareTo(platform) {
   const canvas = document.getElementById('shareCanvas');
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], 'yatlo-verse.png', { type: 'image/png' });
-
-  if (platform === 'whatsapp' || platform === 'facebook') {
-    if (navigator.share) {
-      navigator.share({ files: [file] }).catch(() => { });
-    } else {
-      showToast("يرجى حفظ الصورة لمشاركتها");
-    }
-  }
+  if (navigator.share) {
+    navigator.share({ files: [file] }).catch(() => { });
+  } else { showToast("يرجى حفظ الصورة لمشاركتها"); }
 }
 
-function closeModal() {
-  const modal = document.getElementById('shareModal');
+// --- 7. UTILS & INDEX ---
+
+function renderIndex() {
+  const grid = document.getElementById('indexGrid');
+  if (!grid) return;
+  const query = document.getElementById('indexSearch')?.value.toLowerCase() || "";
+  const filtered = allSurahs.filter(s => s.name_arabic.includes(query) || s.id.toString() === query);
+  grid.innerHTML = filtered.map(s => `
+    <div onclick="selectFromIndex(${s.id})" class="bg-[#162927] border border-teal-900/50 p-3 rounded-xl text-center cursor-pointer hover:border-teal-400">
+      <h3 class="text-base font-bold quran-font text-white">${s.name_arabic}</h3>
+      <p class="text-[9px] text-slate-500 uppercase">${s.name_simple}</p>
+    </div>`).join('');
+}
+
+function openIndex() {
+  const modal = document.getElementById('indexModal');
+  if (!modal) return;
+  modal.classList.replace('hidden', 'flex');
+  setTimeout(() => modal.classList.add('active'), 10);
+  renderIndex();
+}
+
+function closeIndex() {
+  const modal = document.getElementById('indexModal');
+  if (!modal) return;
   modal.classList.remove('active');
   setTimeout(() => modal.classList.replace('flex', 'hidden'), 300);
 }
 
-// --- 8. UTILS & ADMIN ---
+function selectFromIndex(surahId) {
+  window.location.href = `build/html/surah.html?surah=${surahId}`;
+}
 
 function showToast(message) {
   const toast = document.getElementById('toast');
-  document.getElementById('toastMessage').innerText = message;
+  const msgEl = document.getElementById('toastMessage');
+  if (!toast || !msgEl) return;
+  msgEl.innerText = message;
   toast.classList.replace('opacity-0', 'opacity-100');
   setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
 
-// Admin Long-Press (5 seconds)
-let pressTimer;
-const adminBtn = document.getElementById('btn-daily');
-if (adminBtn) {
-  const start = () => { pressTimer = setTimeout(() => { if (confirm("Admin Panel?")) window.location.href = 'build/html/admin.html'; }, 5000); };
-  const end = () => clearTimeout(pressTimer);
-  adminBtn.addEventListener('mousedown', start); adminBtn.addEventListener('mouseup', end);
-  adminBtn.addEventListener('touchstart', start); adminBtn.addEventListener('touchend', end);
-}
-
+// Start app
 initSurahData();

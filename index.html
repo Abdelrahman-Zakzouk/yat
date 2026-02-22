@@ -50,7 +50,8 @@
       <div class="relative flex items-center gap-2">
         <label class="text-teal-400 text-sm">السورة:</label>
         <div class="relative">
-          <input type="text" id="surahSearch" oninput="filterSurahs()" placeholder="ابحث باسم السورة..."
+          <input type="text" id="surahSearch" oninput="filterSurahs()" onkeydown="handleSurahKey(event)"
+            onchange="handleAutofill(event)" autocomplete="on" placeholder="ابحث باسم السورة..."
             class="w-48 bg-[#0f1a19] border border-teal-800 rounded-lg px-3 py-1 text-white focus:border-teal-400 outline-none transition-all">
           <div id="surahList"
             class="hidden absolute top-full left-0 w-full bg-[#1a2e2c] border border-teal-800 rounded-b-lg mt-1 max-h-60 overflow-y-auto z-[100] shadow-2xl custom-scrollbar">
@@ -60,7 +61,7 @@
       </div>
       <div class="flex items-center gap-2">
         <label class="text-teal-400 text-sm">الآية:</label>
-        <input type="number" id="ayahInput" min="1" placeholder="1"
+        <input type="number" id="ayahInput" onkeydown="handleAyahKey(event)" min="1" placeholder="1"
           class="w-16 bg-[#0f1a19] border border-teal-800 rounded-lg px-2 py-1 text-center text-white focus:border-teal-400 outline-none">
       </div>
       <button type="button" onclick="searchVerse()"

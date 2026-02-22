@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رحلة الختمة | Yatlo</title>
+    <link rel="stylesheet" href="../css/khatma.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Rakkas&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="khatma-wrapper">
+        <header class="journey-header">
+            <h1 class="font-rakkas">رحلة الختمة</h1>
+            <p class="subtitle">وسارعوا إلى مغفرة من ربكم</p>
+        </header>
+
+        <div id="khatmaDashboard" class="khatma-container">
+            <div class="shimmer-card"></div>
+        </div>
+
+        <div class="journey-actions">
+            <button onclick="openSetupModal()" class="action-btn secondary">إعداد ختمة جديدة</button>
+            <button onclick="window.location.href='/index.html'" class="action-btn primary">العودة للمصحف</button>
+        </div>
+    </div>
+
+    <div id="setupKhatmaModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="font-rakkas">ابدأ رحلة جديدة</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">اختر المدة الزمنية للختمة:</p>
+            <div class="options-grid">
+                <button onclick="createNewJourney(30)" class="opt-card">
+                    <span class="days">٣٠</span>
+                    <span class="label">يوماً</span>
+                </button>
+                <button onclick="createNewJourney(60)" class="opt-card">
+                    <span class="days">٦٠</span>
+                    <span class="label">يوماً</span>
+                </button>
+                <button onclick="createNewJourney(90)" class="opt-card">
+                    <span class="days">٩٠</span>
+                    <span class="label">يوماً</span>
+                </button>
+            </div>
+            <button onclick="closeSetupModal()" class="close-link">إلغاء</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/khatma.js"></script>
+</body>
+
+</html>
