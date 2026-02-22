@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>يتلو | لوحة التحكم</title>
+
+    <link rel="stylesheet" href="../css/admin.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
+        rel="stylesheet" />
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+
+<body class="admin-body flex items-center justify-center p-4">
+    <nav class="fixed top-0 left-0 right-0 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 z-50">
+        <header
+            class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 bg-[#162927]/80 backdrop-blur-md sticky top-0 z-50">
+            <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
+                href="/index.html">يتلو</a>
+            <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="history.html" class="text-gray-400 hover:text-white transition-colors text-sm">السجل</a>
+                </div>
+                <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+                    <button onclick="openIndex()" class="hover:text-teal-400 transition">الفهرس</button>
+                </nav>
+            </nav>
+            <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
+                <ion-icon name="menu-outline"></ion-icon>
+            </button>
+        </header>
+    </nav>
+
+    <div id="loginOverlay" class="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6">
+        <div class="max-w-sm w-full space-y-6 text-center">
+            <h2 class="text-2xl font-bold text-teal-400">تحقق من الهوية</h2>
+            <input type="password" id="adminPass" placeholder="كلمة المرور" class="admin-input-premium">
+            <button onclick="checkAuth()" class="admin-push-btn">دخول</button>
+        </div>
+    </div>
+
+    <main id="adminContent" class="hidden max-w-xl w-full mx-auto py-12">
+        <div class="admin-glass p-8 md:p-12 shadow-2xl">
+            <header class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white">بث آية اليوم</h1>
+                <div class="flex items-center justify-center gap-2 mt-2 text-teal-500">
+                    <span class="text-xs uppercase tracking-widest">Live:</span>
+                    <span id="liveVerse" class="font-bold">-:-</span>
+                </div>
+            </header>
+
+            <div class="space-y-4 relative">
+                <div class="relative">
+                    <input type="text" id="newVerseKey" oninput="unifiedAdminLogic()"
+                        placeholder="اكتب اسم السورة أو الرقم (مثلاً: الكهف)" class="admin-input-premium"
+                        autocomplete="off">
+
+                    <div id="adminSearchList"
+                        class="hidden absolute z-[100] w-full mt-2 bg-[#0f1a19] border border-teal-500/30 rounded-xl max-h-60 overflow-y-auto shadow-2xl">
+                    </div>
+                </div>
+
+                <div id="previewCard"
+                    class="hidden mt-6 p-6 rounded-2xl border border-teal-500/30 bg-teal-500/5 transition-all duration-500">
+                    <div class="flex justify-between items-center mb-4">
+                        <span id="previewName" class="text-teal-400 font-bold"></span>
+                        <span class="text-[10px] bg-teal-500/20 px-2 py-1 rounded text-teal-300">مراجعة الآية</span>
+                    </div>
+                    <p id="previewText" class="text-white text-xl text-center font-['Amiri'] leading-relaxed mb-6"></p>
+                    <div class="mt-4 space-y-2">
+                        <label class="text-teal-400 text-xs font-bold block px-1">ماذا نتعلم من هذه الآية؟
+                            (اختياري)</label>
+                        <textarea id="verseNote" class="admin-input-premium text-right h-24 resize-none text-sm"
+                            placeholder="اكتب تأملاً أو ملاحظة هنا..."></textarea>
+                    </div>
+                    <button onclick="updateDailyVerse()" id="updateBtn" class="admin-push-btn">
+                        <span>تأكيد وبث التحديث</span>
+                        <ion-icon name="paper-plane-outline"></ion-icon>
+                    </button>
+                </div>
+
+                <div id="statusMsg" class="h-4 text-center text-xs mt-4"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api-filter.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+
+</html>

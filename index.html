@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>يتلو | Yatlo Quran</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
     rel="stylesheet" />
@@ -18,9 +19,10 @@
     class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 bg-[#162927]/80 backdrop-blur-md sticky top-0 z-50">
     <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors" href="index.html">يتلو</a>
     <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-      <a href="#" class="hover:text-teal-400 transition">الرئيسية</a>
+      <div class="hidden md:flex items-center gap-6">
+        <a href="/build/html/history.html" class="text-gray-400 hover:text-white transition-colors text-sm">السجل</a>
+      </div>
       <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-        <a href="index.html" class="hover:text-teal-400 transition">الرئيسية</a>
         <button onclick="openIndex()" class="hover:text-teal-400 transition">الفهرس</button>
       </nav>
     </nav>
@@ -30,7 +32,6 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-6 py-6 lg:py-6">
-
     <div class="flex justify-center mb-6">
       <div class="bg-[#162927] p-1 rounded-full border border-teal-800/50 flex items-center relative w-64 h-12">
         <div id="toggleBg"
@@ -62,7 +63,7 @@
         <input type="number" id="ayahInput" min="1" placeholder="1"
           class="w-16 bg-[#0f1a19] border border-teal-800 rounded-lg px-2 py-1 text-center text-white focus:border-teal-400 outline-none">
       </div>
-      <button onclick="searchVerse()"
+      <button type="button" onclick="searchVerse()"
         class="bg-teal-600 hover:bg-teal-500 text-white px-4 py-1.5 rounded-lg transition-all flex items-center gap-2 active:scale-95 shadow-lg">
         <ion-icon name="search-outline"></ion-icon><span>انتقال</span>
       </button>
@@ -74,45 +75,64 @@
       </div>
       <div
         class="relative bg-[#1a2e2c] border border-teal-800/50 rounded-3xl p-8 md:p-16 flex flex-col items-center shadow-2xl">
-        <p id="verse" class="quran-font text-3xl md:text-4xl text-center mb-10 text-white"></p>
 
-        <div id="audioBtn" style="display:none;" class="flex flex-wrap items-center justify-center gap-4 mb-8">
-          <button onclick="toggleAudio()"
-            class="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white px-8 py-3 rounded-full transition-all shadow-lg">
-            <ion-icon name="play-outline" id="playIcon"></ion-icon><span id="audioStatus">استماع</span>
-          </button>
-          <select id="reciterSelect" onchange="loadRecitation()"
-            class="bg-[#162927] text-teal-400 border border-teal-800 rounded-lg px-4 py-2 outline-none focus:border-teal-500 transition-all">
-            <option value="Yasser_Ad-Dussary_128kbps">ياسر الدوسري</option>
-            <option value="Alafasy_128kbps">مشاري العفاسي</option>
-            <option value="Abdul_Basit_Murattal_192kbps">عبد الباسط</option>
-            <option value="MaherAlMuaiqly128kbps">ماهر المعيقلي</option>
-          </select>
-        </div>
+        <h2 id="chapter" class="text-teal-500 font-['Amiri'] text-xl mb-4">...</h2>
 
-        <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-teal-800 to-transparent mb-8"></div>
+        <p id="verse" class="quran-font text-3xl md:text-5xl text-center mb-10 text-white leading-relaxed"></p>
 
-        <div class="flex flex-wrap justify-center gap-4 mb-8">
-          <div onclick="goToSurah()"
-            class="flex items-center gap-3 cursor-pointer hover:bg-teal-800/30 p-3 rounded-xl transition-all border border-transparent hover:border-teal-700">
-            <ion-icon name="book-outline" class="text-teal-400 text-2xl"></ion-icon>
-            <span id="chapter" class="text-lg font-['Amiri']"></span>
+        <div id="notePanel" class="hidden mt-6 p-4 bg-teal-900/20 border border-teal-500/30 rounded-2xl">
+          <div class="flex items-center gap-2 mb-2 text-teal-400 font-bold">
+            <ion-icon name="bulb-outline"></ion-icon>
+            <span>هدايات الآية</span>
           </div>
-          <button onclick="toggleTafsir()"
-            class="flex items-center gap-2 bg-teal-900/30 border border-teal-800 text-teal-400 px-5 py-2 rounded-xl hover:bg-teal-800/50 transition">
-            <ion-icon name="information-circle-outline"></ion-icon><span>التفسير</span>
-          </button>
-          <button onclick="generateNewVerse()"
-            class="bg-teal-600 hover:bg-teal-500 text-white px-6 py-3 rounded-full transition-all shadow-lg active:scale-95">
-            <ion-icon name="reload-outline"></ion-icon><span>آية أخرى</span>
-          </button>
-          <button onclick="shareAsImage()"
-            class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-full transition-all shadow-lg active:scale-95">
-            <ion-icon name="share-social-outline"></ion-icon><span>مشاركة</span>
-          </button>
+          <p id="noteContent" class="text-slate-300 text-sm leading-relaxed"></p>
         </div>
 
-        <div id="tafsirPanel" class="hidden w-full mt-4 p-6 bg-[#0f1a19] border border-teal-800 rounded-2xl">
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <div class="flex gap-2">
+            <button onclick="toggleTafsir()"
+              class="flex items-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 px-5 py-2.5 rounded-2xl border border-teal-800/50 transition-all active:scale-95">
+              <ion-icon name="book-outline"></ion-icon>
+              <span class="text-sm font-bold">التفسير</span>
+            </button>
+            <button onclick="goToSurah()"
+              class="flex items-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 px-5 py-2.5 rounded-2xl border border-teal-800/50 transition-all active:scale-95">
+              <ion-icon name="open-outline"></ion-icon>
+              <span class="text-sm font-bold">السورة كاملة</span>
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <div class="flex bg-teal-600 rounded-2xl shadow-lg">
+              <button id="audioBtn" onclick="toggleAudio()"
+                class="flex items-center gap-2 hover:bg-teal-500 text-white px-5 py-2.5 rounded-r-2xl border-l border-teal-700 transition-all active:scale-95">
+                <ion-icon id="playIcon" name="play-outline"></ion-icon>
+                <span id="audioStatus" class="text-sm font-bold">استماع</span>
+              </button>
+              <select id="reciterSelect" onchange="loadRecitation()"
+                class="bg-teal-600 text-white text-xs px-2 rounded-l-2xl outline-none border-none cursor-pointer">
+
+                <option value="Yasser_Ad-Dussary_128kbps">ياسر الدوسري</option>
+                <option value="Abdul_Basit_Mujawwad_128kbps">عبد الباسط (مجود)</option>
+                <option value="Husary_128kbps">الحصري</option>
+                <option value="Alafasy_128kbps">مشاري العفاسي</option>
+                <option value="Abdurrahmaan_As-Sudais_192kbps">عبد الرحمن السديس</option>
+                <option value="Nasser_Alqatami_128kbps">ناصر القطامي</option>
+                <option value="Fares_Abbad_64kbps">فارس عباد</option>
+                <option value="Saood_ash-Shuraym_128kbps">سعود الشريم</option>
+                <option value="Abu_Bakr_Ash-Shaatree_128kbps">أبو بكر الشاطري</option>
+              </select>
+            </div>
+
+            <button onclick="shareAsImage()"
+              class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-2xl backdrop-blur-sm border border-white/10 transition-all active:scale-95">
+              <ion-icon name="share-social-outline"></ion-icon>
+              <span class="text-sm font-bold">مشاركة</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="tafsirPanel" class="hidden w-full mt-10 p-6 bg-[#0f1a19] border border-teal-800 rounded-2xl">
           <h4 class="text-teal-400 font-bold mb-4 flex items-center gap-2">التفسير الميسر</h4>
           <p id="tafsirContent" class="text-slate-300 leading-relaxed font-['Amiri'] text-lg"></p>
         </div>
@@ -120,23 +140,45 @@
     </section>
   </main>
 
-  <div id="shareModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-    <div class="bg-[#1a2e2c] border border-teal-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl">
-      <img id="previewImage" class="w-full rounded-xl mb-6 shadow-lg border border-teal-700/30">
-      <div class="flex flex-col gap-3">
-        <button onclick="shareTo('whatsapp')" class="share-btn bg-[#25D366]">
-          <ion-icon name="logo-whatsapp"></ion-icon><span>واتساب</span>
-        </button>
-        <button onclick="shareTo('native')"
-          class="share-btn bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045]">
-          <ion-icon name="logo-instagram"></ion-icon><span>إنستجرام / ستوري</span>
-        </button>
-        <button onclick="copyToClipboard()" class="share-btn bg-[#1877F2]">
-          <ion-icon name="copy-outline"></ion-icon><span>نسخ للفيسبوك</span>
-        </button>
-        <button onclick="closeModal()"
-          class="mt-2 py-2 text-slate-400 hover:text-white transition-colors">إغلاق</button>
+  <div id="shareModal"
+    class="hidden fixed inset-0 z-[100] items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300">
+    <div
+      class="bg-[#12211f] w-full max-w-md rounded-3xl overflow-hidden border border-teal-500/20 shadow-2xl transform scale-95 transition-transform duration-300"
+      id="shareModalContent">
+      <div class="p-2">
+        <img id="previewImage" class="w-full rounded-2xl shadow-lg border border-white/5" alt="Verse Preview">
       </div>
+
+      <div class="p-6 grid grid-cols-3 gap-4">
+        <button onclick="copyImageToClipboard()" class="flex flex-col items-center gap-2 group">
+          <div
+            class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-teal-500/20 transition-all">
+            <ion-icon name="copy-outline" class="text-xl text-teal-400"></ion-icon>
+          </div>
+          <span class="text-[10px] text-gray-400 uppercase tracking-widest">Copy</span>
+        </button>
+
+        <button onclick="shareTo('whatsapp')" class="flex flex-col items-center gap-2 group">
+          <div
+            class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-green-500/20 transition-all">
+            <ion-icon name="logo-whatsapp" class="text-xl text-green-400"></ion-icon>
+          </div>
+          <span class="text-[10px] text-gray-400 uppercase tracking-widest">WhatsApp</span>
+        </button>
+
+        <button onclick="shareTo('facebook')" class="flex flex-col items-center gap-2 group">
+          <div
+            class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-500/20 transition-all">
+            <ion-icon name="logo-facebook" class="text-xl text-blue-400"></ion-icon>
+          </div>
+          <span class="text-[10px] text-gray-400 uppercase tracking-widest">Facebook</span>
+        </button>
+      </div>
+
+      <button onclick="closeModal()"
+        class="w-full py-4 bg-white/5 text-gray-400 text-sm font-bold hover:bg-red-500/10 hover:text-red-400 transition-all border-t border-white/5">
+        إغلاق
+      </button>
     </div>
   </div>
 
@@ -157,12 +199,62 @@
         </button>
       </div>
 
-      <div class="p-4 flex flex-col gap-2 bg-[#162927]/30 border-b border-teal-800/30">
+      <div class="p-2 grid grid-cols-3 gap-1.5 bg-[#162927]/30 border-b border-teal-800/30">
+
         <button onclick="closeIndex(); window.scrollTo({top: 0, behavior: 'smooth'});"
-          class="flex items-center gap-4 bg-teal-900/40 p-4 rounded-xl border border-teal-700/30 text-right">
-          <ion-icon name="home-outline" class="text-teal-400 text-xl"></ion-icon>
-          <span class="font-bold">الرئيسية (لوحة التحكم)</span>
+          class="flex flex-col items-center justify-center py-2 bg-teal-900/40 rounded-lg border border-teal-700/30 hover:bg-teal-400/10 transition-all active:scale-95">
+          <ion-icon name="home-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
+          <div class="text-center leading-tight">
+            <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الرئيسية</span>
+            <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Home</span>
+          </div>
         </button>
+
+        <button onclick="location.href='/build/html/history.html'"
+          class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+          <ion-icon name="time-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+          <div class="text-center leading-tight">
+            <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">سجل الآيات</span>
+            <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">History</span>
+          </div>
+        </button>
+
+        <button onclick="location.href='/build/html/wird.html'"
+          class="flex flex-col items-center justify-center py-2 bg-teal-500/10 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all active:scale-95">
+          <ion-icon name="calendar-clear-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
+          <div class="text-center leading-tight">
+            <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الورد اليومي</span>
+            <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Wird</span>
+          </div>
+        </button>
+
+        <button onclick="location.href='/build/html/khatma.html'"
+          class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+          <ion-icon name="flag-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+          <div class="text-center leading-tight">
+            <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">رحلة الختمة</span>
+            <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Khatma</span>
+          </div>
+        </button>
+
+        <button onclick="location.href='/build/html/hadiths.html'"
+          class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+          <ion-icon name="book-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+          <div class="text-center leading-tight">
+            <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الأحاديث</span>
+            <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Hadiths</span>
+          </div>
+        </button>
+
+        <button onclick="location.href='/build/html/duas.html'"
+          class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+          <ion-icon name="heart-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+          <div class="text-center leading-tight">
+            <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الأدعية</span>
+            <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Duas</span>
+          </div>
+        </button>
+
       </div>
 
       <div class="p-4 bg-[#162927]/50">

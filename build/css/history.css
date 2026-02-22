@@ -1,0 +1,15 @@
+body {
+    background-color: #050505;
+    font-family: 'Inter', sans-serif;
+    color: white;
+}
+
+.quran-font {
+    font-family: 'Amiri', serif;
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل الآيات | القرآن اليومي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="../css/history.css">
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+</head>
+
+<body class="pt-24 pb-12">
+
+    <nav class="fixed top-0 left-0 right-0 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 z-50">
+        <header
+            class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 bg-[#162927]/80 backdrop-blur-md sticky top-0 z-50">
+            <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
+                href="/index.html">يتلو</a>
+            <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="history.html" class="text-gray-400 hover:text-white transition-colors text-sm">السجل</a>
+                </div>
+                <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+                    <button onclick="openIndex()" class="hover:text-teal-400 transition">الفهرس</button>
+                </nav>
+            </nav>
+            <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
+                <ion-icon name="menu-outline"></ion-icon>
+            </button>
+        </header>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-6">
+        <header class="mb-12 text-center">
+            <h2 class="text-3xl font-bold quran-font mb-2">سجل الآيات السابقة</h2>
+            <p class="text-gray-500 text-sm">أرشيف التدبر والرسائل اليومية</p>
+        </header>
+
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block w-8 h-8 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin">
+            </div>
+        </div>
+
+        <div id="historyList" class="space-y-6"></div>
+    </main>
+
+    <script src="../js/api-filter.js"></script>
+    <script src="../js/history.js"></script>
+</body>
+
+</html>

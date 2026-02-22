@@ -1,0 +1,145 @@
+/* Glassmorphism Background */
+.admin-body {
+    background: radial-gradient(circle at top right, #162927, #0f1a19);
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.admin-glass {
+    background: rgba(22, 41, 39, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(45, 212, 191, 0.1);
+    border-radius: 2.5rem;
+    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.6);
+}
+
+/* Premium Input */
+.admin-input-premium {
+    width: 100%;
+    background: rgba(15, 26, 25, 0.8);
+    border: 2px solid rgba(45, 212, 191, 0.05);
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    color: white;
+    font-size: 1.25rem;
+    text-align: center;
+    outline: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-input-premium:focus {
+    border-color: #14b8a6;
+    background: #0f1a19;
+    box-shadow: 0 0 25px rgba(20, 184, 166, 0.15);
+}
+
+/* The "Push" Button */
+.admin-push-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+    color: white;
+    font-weight: 700;
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px -5px rgba(13, 148, 136, 0.4);
+    border: none;
+    cursor: pointer;
+}
+
+.admin-push-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -5px rgba(13, 148, 136, 0.6);
+    filter: brightness(1.1);
+}
+
+.admin-push-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.admin-push-btn:disabled {
+    background: #1e293b;
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+#adminSearchList div {
+    transition: background 0.2s ease;
+    font-family: 'Amiri', serif;
+    font-size: 1.1rem;
+}
+
+/* --- Custom Scrollbar Styling --- */
+
+/* 1. The background of the scrollbar (track) */
+::-webkit-scrollbar {
+    width: 8px;
+    /* Vertical scrollbar width */
+    height: 8px;
+    /* Horizontal scrollbar height */
+}
+
+/* 2. The track (the area the thumb slides on) */
+::-webkit-scrollbar-track {
+    background: #0f1a19;
+    /* Matches your background */
+}
+
+/* 3. The draggable handle (thumb) */
+::-webkit-scrollbar-thumb {
+    background: #14b8a6;
+    /* Your Teal color */
+    border-radius: 10px;
+    border: 2px solid #0f1a19;
+    /* Creates a padding effect around the thumb */
+}
+
+/* 4. Thumb on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #2dd4bf;
+    /* Lighter teal on hover */
+}
+
+/* Firefox Support */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #14b8a6 #0f1a19;
+}
+
+#adminSearchList::-webkit-scrollbar {
+    width: 4px;
+}
+
+#adminSearchList::-webkit-scrollbar-thumb {
+    background: rgba(45, 212, 191, 0.3);
+    /* Transparent teal */
+    border: none;
+}
+
+#adminSearchList::-webkit-scrollbar-thumb:hover {
+    background: rgba(45, 212, 191, 0.6);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+#adminSearchList div:active,
+#adminSearchList div:hover {
+    background-color: rgba(20, 184, 166, 0.2);
+    outline: 1px solid #14b8a6;
+}
+
+/* Make the password field glow when you are about to hit Enter */
+#adminPass:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.3);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
