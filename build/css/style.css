@@ -233,3 +233,58 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: white !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* 1. Parent Wrapper - Strip styles and allow expansion */
+#notePanel {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 2rem auto;
+  width: 100%;
+}
+
+/* 2. The Card - Solid Match + Wide Layout */
+.lesson-container {
+  width: 100%;
+  max-width: 1000px;
+  /* Expands to match main section width */
+  margin: 0 auto;
+  padding: 2.5rem 3rem;
+
+  /* Mimic Verse BG: Match rgb(26 46 44) exactly */
+  background-color: rgb(26 46 44);
+
+  /* Visual styling and Rounding */
+  border-radius: 20px;
+
+  /* Subtle border for definition without the heavy right bar */
+  border: 1px solid rgba(45, 212, 191, 0.2);
+
+  /* Removed border-right per request */
+  border-right: none;
+
+  /* Fix: Clips content to rounded edges */
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.lesson-title {
+  font-family: 'Rakkas', serif;
+  color: #2dd4bf;
+  font-size: 1.6rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  direction: rtl;
+}
+
+.lesson-text {
+  font-family: 'Amiri', serif;
+  line-height: 2.2;
+  color: #e2e8f0;
+  font-size: 1.35rem;
+  text-align: right;
+  direction: rtl;
+}

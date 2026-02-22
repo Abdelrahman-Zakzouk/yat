@@ -1,6 +1,6 @@
 /**
  * يتلو | Yatlo Quran - Unified Logic
- * Features: Hamza Filtering, Dynamic Canvas Scaling, Audio, and Search.
+ * Features: Hamza Filtering, Dynamic Canvas Scaling, Audio, Search, and Khatma Journey.
  */
 
 // --- GLOBAL STATE ---
@@ -9,6 +9,7 @@ let currentVerseKey = null;
 let currentAudio = new Audio();
 let allSurahs = [];
 let isRandomMode = false;
+const TOTAL_QURAN_VERSES = 6236; // Added for Khatma math
 
 // --- CONFIGURATION ---
 const SUPABASE_URL = 'https://ruokjdtnpraaglmewjwa.supabase.co';
@@ -51,17 +52,36 @@ async function fetchDailyVerseKey() {
   } catch (e) { return "2:255"; }
 }
 
+/**
+ * Fetches and styles the "Lesson Learnt" (الدروس المستفادة)
+ */
 async function fetchVerseNote(verseKey) {
   const notePanel = document.getElementById('notePanel');
   const noteContent = document.getElementById('noteContent');
   if (!notePanel || !noteContent) return;
+
   try {
-    const { data } = await sbClient.from('verse_notes').select('note_text').eq('verse_key', verseKey).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    const { data } = await sbClient.from('verse_notes')
+      .select('note_text')
+      .eq('verse_key', verseKey)
+      .maybeSingle();
+
     if (data?.note_text?.trim()) {
-      noteContent.innerText = safeFilter(data.note_text);
+      // Internal title updated to "هدايات الآية"
+      // Outer headers should be removed from your HTML template
+      noteContent.innerHTML = `
+        <div class="lesson-container fade-in">
+            <span class="lesson-title">✦ هدايات الآية:</span>
+            <p class="lesson-text">${safeFilter(data.note_text)}</p>
+        </div>
+      `;
       notePanel.classList.remove('hidden');
-    } else { notePanel.classList.add('hidden'); }
-  } catch (e) { notePanel.classList.add('hidden'); }
+    } else {
+      notePanel.classList.add('hidden');
+    }
+  } catch (e) {
+    notePanel.classList.add('hidden');
+  }
 }
 
 async function initSurahData() {
@@ -77,21 +97,15 @@ async function initSurahData() {
 
 // --- 3. SEARCH & FULL SURAH NAVIGATION ---
 
-/**
- * Handles Enter key on Surah input: picks best match and moves to Ayah.
- */
 function handleSurahKey(event) {
   if (event.key === 'Enter') {
     const query = event.target.value.trim();
     if (!query) return;
-
-    // Find the best match from our current surah list
     const match = allSurahs.find(s =>
       s.name_arabic.includes(query) ||
       s.name_simple.toLowerCase().includes(query) ||
       s.id.toString() === query
     );
-
     if (match) {
       selectSurah(match.name_arabic, match.id);
     } else {
@@ -100,9 +114,6 @@ function handleSurahKey(event) {
   }
 }
 
-/**
- * Handles Enter key on Ayah input: validates and submits search.
- */
 function handleAyahKey(event) {
   if (event.key === 'Enter') {
     const ayahVal = event.target.value.trim();
@@ -114,16 +125,13 @@ function handleAyahKey(event) {
   }
 }
 
-// Handles browser history or clicking away for Surah names
 function handleAutofill(event) {
   const query = event.target.value.trim();
   if (!query) return;
-
   const match = allSurahs.find(s =>
     s.name_arabic === query ||
     s.name_simple.toLowerCase() === query
   );
-
   if (match) {
     selectSurah(match.name_arabic, match.id);
   }
@@ -136,13 +144,11 @@ function filterSurahs() {
     list?.classList.add('hidden');
     return;
   }
-
   const matches = allSurahs.filter(s =>
     s.name_arabic.includes(query) ||
     s.name_simple.toLowerCase().includes(query) ||
     s.id.toString() === query
   ).slice(0, 10);
-
   if (matches.length > 0) {
     list.innerHTML = matches.map(s => `
       <div onclick="selectSurah('${s.name_arabic}', ${s.id})" 
@@ -159,13 +165,10 @@ function selectSurah(name, id) {
   const searchInput = document.getElementById('surahSearch');
   const hiddenInput = document.getElementById('surahInput');
   const ayahInput = document.getElementById('ayahInput');
-
   if (searchInput) searchInput.value = name;
   if (hiddenInput) hiddenInput.value = id;
-
+  currentSurahNumber = id;
   document.getElementById('surahList')?.classList.add('hidden');
-
-  // Shift focus to Ayah input after valid selection
   if (ayahInput) {
     setTimeout(() => ayahInput.focus(), 50);
   }
@@ -174,15 +177,37 @@ function selectSurah(name, id) {
 function searchVerse() {
   const surahId = document.getElementById('surahInput')?.value;
   const ayahId = document.getElementById('ayahInput')?.value;
-
   if (!surahId) return showToast("⚠️ اختر السورة أولاً");
   if (!ayahId) return showToast("⚠️ اختر الآية أولاً");
-
+  currentSurahNumber = surahId;
   fetchVerseByKey(`${surahId}:${ayahId}`);
   closeIndex();
 }
 
-// --- 4. CORE FETCHING ---
+function goToSurah() {
+  if (currentSurahNumber) {
+    window.location.href = `build/html/surah.html?surah=${currentSurahNumber}`;
+  } else {
+    showToast("⚠️ يرجى اختيار سورة أولاً");
+  }
+}
+
+// --- 4. CORE FETCHING & KHATMA BRIDGE ---
+
+/**
+ * BRIDGE: Syncs current reading progress with the Khatma Journey.
+ */
+async function syncKhatmaProgress(verseKey) {
+  try {
+    const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}`);
+    const data = await res.json();
+    const verseIndex = data.verse.id;
+
+    await sbClient.from('khatma_progress')
+      .update({ last_verse_key: verseKey, completed_verses: verseIndex })
+      .eq('is_active', true);
+  } catch (e) { /* Silent fail if no active journey */ }
+}
 
 function fetchVerseByKey(verseKey) {
   const verseEl = document.getElementById('verse');
@@ -211,6 +236,7 @@ function fetchVerseByKey(verseKey) {
       }
       loadRecitation();
       fetchVerseNote(currentVerseKey);
+      syncKhatmaProgress(currentVerseKey); // Sync Journey
     })
     .catch(() => showToast("تعذر تحميل الآية"));
 }
@@ -252,11 +278,9 @@ function toggleTafsir() {
   const panel = document.getElementById('tafsirPanel');
   if (!panel) return;
   if (!panel.classList.contains('hidden')) { panel.classList.add('hidden'); return; }
-
   const content = document.getElementById('tafsirContent');
   content.innerText = "جاري التحميل...";
   panel.classList.remove('hidden');
-
   fetch(`https://api.quran.com/api/v4/tafsirs/16/by_ayah/${currentVerseKey}`)
     .then(res => res.json())
     .then(data => {
@@ -264,7 +288,7 @@ function toggleTafsir() {
     });
 }
 
-// --- 6. SHARING & CANVAS (Visual Match Update) ---
+// --- 6. SHARING & CANVAS ---
 
 async function shareAsImage() {
   const canvas = document.getElementById('shareCanvas');
@@ -276,14 +300,12 @@ async function shareAsImage() {
 
   canvas.width = 1080; canvas.height = 1080;
 
-  // 1. BACKGROUND: Radial Gradient
   const gradient = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
   gradient.addColorStop(0, '#152422');
   gradient.addColorStop(1, '#0b1211');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 1080, 1080);
 
-  // 2. THE ROUNDED OUTLINE (10px thickness, 10px radius)
   ctx.strokeStyle = '#2dd4bf';
   ctx.lineWidth = 10;
   ctx.beginPath();
@@ -291,53 +313,39 @@ async function shareAsImage() {
   ctx.stroke();
 
   ctx.textAlign = 'center'; ctx.direction = 'rtl';
-
-  // 3. CHAPTER & VERSE (Top Position - Rakkas Font)
   ctx.fillStyle = '#2dd4bf';
   ctx.font = '42px "Amiri", serif';
   ctx.fillText(chapterText, 540, 120);
 
-  // 4. DYNAMIC TEXT SCALING FOR VERSE
   ctx.fillStyle = 'white';
-
   let fontSize = 68;
   let lines = [];
   const maxWidth = 880;
-  const maxHeight = 700; // Constrained space to avoid overlapping footer
+  const maxHeight = 700;
 
   while (fontSize > 18) {
     ctx.font = `bold ${fontSize}px "Amiri", serif`;
-    let currentLineHeight = fontSize * 1.5; // Proportional scaling
+    let currentLineHeight = fontSize * 1.5;
     lines = [];
     let words = verseText.split(' ');
     let currentLine = '';
-
     words.forEach(word => {
       let testLine = currentLine + word + ' ';
       if (ctx.measureText(testLine).width > maxWidth) {
         lines.push(currentLine.trim());
         currentLine = word + ' ';
-      } else {
-        currentLine = testLine;
-      }
+      } else { currentLine = testLine; }
     });
     lines.push(currentLine.trim());
-
     if (lines.length * currentLineHeight <= maxHeight) break;
     fontSize -= 2;
   }
 
   const finalLineHeight = fontSize * 1.5;
-  // Calculate balanced starting Y position
   let y = 180 + (maxHeight - (lines.length * finalLineHeight)) / 2 + (finalLineHeight / 1.2);
-
   ctx.font = `bold ${fontSize}px "Amiri", serif`;
-  lines.forEach(line => {
-    ctx.fillText(line, 540, y);
-    y += finalLineHeight;
-  });
+  lines.forEach(line => { ctx.fillText(line, 540, y); y += finalLineHeight; });
 
-  // 5. BRANDING FOOTER (Bottom Position - Rakkas Font)
   ctx.fillStyle = '#2dd4bf';
   ctx.font = '30px "Rakkas", serif';
   ctx.fillText('تطبيق يتلو | Yatlo Quran', 540, 1030);
@@ -416,5 +424,11 @@ function showToast(message) {
   setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
 
-// Start app
+// Auto-load verse if coming from Khatma dashboard
+window.onload = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const verseParam = urlParams.get('verse');
+  if (verseParam) fetchVerseByKey(verseParam);
+};
+
 initSurahData();
