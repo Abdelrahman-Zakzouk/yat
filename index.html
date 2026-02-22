@@ -10,54 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
     rel="stylesheet" />
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <style>
-    .quran-font {
-      font-family: 'Amiri Quran', serif;
-      line-height: 2.5;
-    }
-
-    #shareCanvas {
-      display: none;
-    }
-
-    /* MODAL ANIMATION */
-    #shareModal {
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-      visibility: hidden;
-      opacity: 0;
-    }
-
-    #shareModal.active {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    #shareModal>div {
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      transform: scale(0.9);
-    }
-
-    #shareModal.active>div {
-      transform: scale(1);
-    }
-
-    .share-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      width: 100%;
-      padding: 1rem 0;
-      border-radius: 1rem;
-      font-weight: 700;
-      color: white;
-      transition: all 0.2s;
-    }
-
-    .share-btn:active {
-      transform: scale(0.96);
-    }
-  </style>
+  <link rel="stylesheet" href="build/css/style.css">
 </head>
 
 <body class="min-h-screen bg-[#0f1a19] text-slate-200 font-medium">
@@ -71,7 +24,9 @@
         <button onclick="openIndex()" class="hover:text-teal-400 transition">الفهرس</button>
       </nav>
     </nav>
-    <button class="text-teal-400 text-3xl md:hidden"><ion-icon name="menu-outline"></ion-icon></button>
+    <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
+      <ion-icon name="menu-outline"></ion-icon>
+    </button>
   </header>
 
   <main class="max-w-5xl mx-auto px-6 py-6 lg:py-6">
@@ -193,16 +148,25 @@
   <div id="indexModal"
     class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/95 p-4 backdrop-blur-md">
     <div
-      class="bg-[#1a2e2c] border border-teal-800 w-full max-w-4xl h-[80vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+      class="bg-[#1a2e2c] border border-teal-800 w-full max-w-4xl h-[90vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
 
       <div class="p-6 border-b border-teal-800/50 flex justify-between items-center bg-[#162927]">
-        <h2 class="text-2xl font-['Rakkas'] text-teal-400">فهرس السور</h2>
+        <h2 class="text-2xl font-['Rakkas'] text-teal-400">القائمة</h2>
         <button onclick="closeIndex()" class="text-slate-400 hover:text-white text-3xl">
           <ion-icon name="close-outline"></ion-icon>
         </button>
       </div>
 
+      <div class="p-4 flex flex-col gap-2 bg-[#162927]/30 border-b border-teal-800/30">
+        <button onclick="closeIndex(); window.scrollTo({top: 0, behavior: 'smooth'});"
+          class="flex items-center gap-4 bg-teal-900/40 p-4 rounded-xl border border-teal-700/30 text-right">
+          <ion-icon name="home-outline" class="text-teal-400 text-xl"></ion-icon>
+          <span class="font-bold">الرئيسية (لوحة التحكم)</span>
+        </button>
+      </div>
+
       <div class="p-4 bg-[#162927]/50">
+        <h3 class="text-teal-500 text-xs mb-2 px-1 font-bold uppercase tracking-widest">فهرس السور</h3>
         <input type="text" id="indexSearch" oninput="renderIndex()" placeholder="ابحث عن سورة..."
           class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white focus:border-teal-400 outline-none">
       </div>
@@ -214,7 +178,7 @@
   </div>
 
   <canvas id="shareCanvas"></canvas>
-  <script src="build/script.js"></script>
+  <script src="build/js/script.js"></script>
 </body>
 
 </html>

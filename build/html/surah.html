@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تحميل السورة...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="../css/surah.css" />
+</head>
+
+<body class="bg-[#0f1a19] text-slate-200">
+
+    <div class="surah-layout-container">
+        <aside class="surah-sidebar">
+            <div class="sticky top-10">
+                <button class="back-btn" onclick="goBack()">
+                    <span>← العودة للرئيسية</span>
+                </button>
+
+                <div class="surah-card-info">
+                    <h1 id="surahTitle" class="text-4xl font-bold text-teal-400 mb-4">...</h1>
+                    <div id="surahDetails" class="text-slate-400 text-lg space-y-2 font-['Amiri']">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="surah-main">
+            <div id="surahContent" class="verses-list">
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/api-filter.js"></script>
+    <script src="../js/surah.js"></script>
+</body>
+
+</html>

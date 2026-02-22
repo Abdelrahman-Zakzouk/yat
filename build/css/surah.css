@@ -72,3 +72,93 @@
         padding: 20px;
     }
 }
+
+/* Layout */
+.surah-layout-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    min-height: 100vh;
+}
+
+.surah-sidebar {
+    background: #162927;
+    padding: 3rem 2rem;
+    border-left: 1px solid rgba(20, 184, 166, 0.1);
+}
+
+.surah-main {
+    padding: 4rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Sidebar Elements */
+.back-btn {
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2dd4bf;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.back-btn:hover {
+    transform: translateX(5px);
+}
+
+.surah-card-info {
+    background: rgba(15, 26, 25, 0.5);
+    padding: 2rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(45, 212, 191, 0.2);
+}
+
+/* Verse Styling */
+.verse-row {
+    display: flex;
+    gap: 2rem;
+    padding: 2.5rem 0;
+    border-bottom: 1px solid rgba(45, 212, 191, 0.1);
+    align-items: center;
+}
+
+.verse-meta {
+    background: #162927;
+    color: #2dd4bf;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(45, 212, 191, 0.3);
+}
+
+.verse-text-content {
+    font-family: 'Amiri Quran', serif;
+    font-size: 2.2rem;
+    line-height: 1.8;
+    text-align: justify;
+    color: black;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .surah-layout-container {
+        grid-template-columns: 1fr;
+    }
+
+    .surah-sidebar {
+        padding: 2rem;
+        border-left: none;
+        border-bottom: 1px solid rgba(45, 212, 191, 0.2);
+    }
+
+    .surah-main {
+        padding: 2rem;
+    }
+}

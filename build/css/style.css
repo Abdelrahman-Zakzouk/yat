@@ -94,6 +94,66 @@
   background: #0f1a19;
 }
 
+.quran-font {
+  font-family: 'Amiri Quran', serif;
+  line-height: 2.5;
+}
+
+#shareCanvas {
+  display: none;
+}
+
+/* MODAL & INDEX ANIMATIONS */
+#shareModal,
+#indexModal {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  visibility: hidden;
+  opacity: 0;
+}
+
+#shareModal.active,
+#indexModal.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+#shareModal>div,
+#indexModal>div {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.95);
+}
+
+#shareModal.active>div,
+#indexModal.active>div {
+  transform: scale(1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f1a19;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #134e4a;
+  border-radius: 10px;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 0;
+  border-radius: 1rem;
+  font-weight: 700;
+  color: white;
+  transition: all 0.2s;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #134e4a;
   border-radius: 10px;
@@ -159,5 +219,173 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.quran-font {
+  font-family: 'Amiri Quran', serif;
+  line-height: 2.5;
+}
+
+#shareCanvas {
+  display: none;
+}
+
+/* MODAL & INDEX ANIMATIONS */
+#shareModal,
+#indexModal {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  visibility: hidden;
+  opacity: 0;
+}
+
+#shareModal.active,
+#indexModal.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+#shareModal>div,
+#indexModal>div {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.95);
+}
+
+#shareModal.active>div,
+#indexModal.active>div {
+  transform: scale(1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f1a19;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #134e4a;
+  border-radius: 10px;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 0;
+  border-radius: 1rem;
+  font-weight: 700;
+  color: white;
+  transition: all 0.2s;
+}
+
+/* Typography */
+.quran-font {
+  font-family: 'Amiri Quran', serif;
+  line-height: 2.5 !important;
+}
+
+#shareCanvas {
+  display: none;
+}
+
+/* MODAL ANIMATION - Prevents launch flicker */
+#shareModal,
+#indexModal {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Ensure the modal is hidden even if display:flex is applied accidentally */
+#shareModal.hidden,
+#indexModal.hidden {
+  display: none !important;
+}
+
+#shareModal.active,
+#indexModal.active {
+  visibility: visible;
+  opacity: 1;
+  display: flex !important;
+  /* Forces layout when active */
+}
+
+#shareModal>div,
+#indexModal>div {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.9);
+}
+
+#shareModal.active>div,
+#indexModal.active>div {
+  transform: scale(1);
+}
+
+/* SHARE BUTTONS - Fixed Roundness */
+.share-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 0 !important;
+  /* !important forces the 1rem curve over Tailwind's defaults */
+  border-radius: 1rem !important;
+  font-weight: 700;
+  color: white;
+  transition: all 0.2s;
+}
+
+.share-btn:active {
+  transform: scale(0.96);
+}
+
+/* build/css/style.css */
+
+@media (max-width: 768px) {
+  #indexModal>div {
+    width: 95%;
+    height: 90vh;
+    /* Make it almost full screen on mobile */
+    margin: 0;
+    border-radius: 1.5rem;
+  }
+
+  #indexGrid {
+    grid-template-columns: 1fr 1fr;
+    /* 2 columns on mobile */
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+}
+
+/* build/css/style.css */
+
+/* Custom styling for the navigation buttons in the modal */
+#indexModal button {
+  transition: all 0.2s ease;
+}
+
+#indexModal button:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  #indexModal>div {
+    width: 100%;
+    height: 95vh;
+    border-radius: 2rem 2rem 0 0;
+    /* Modern look: rounded top on mobile */
+    position: fixed;
+    bottom: 0;
+  }
+
+  #indexGrid {
+    grid-template-columns: 1fr 1fr;
+    /* Stay 2 columns on small screens */
   }
 }
