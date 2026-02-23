@@ -1,14 +1,19 @@
+/* --- 1. Root Variables & Reset --- */
 :root {
     --bg-dark: #0f1a19;
     --teal-primary: #2dd4bf;
     --paper-color: #f4f1ea;
     --spine-shadow: #d8d4c7;
-    /* Slightly deeper for better definition */
     --bookmark-red: #991b1b;
     --glass-bg: rgba(22, 41, 39, 0.8);
 }
 
-/* 1. Global Utilities */
+body {
+    font-family: 'Amiri', serif;
+    background-color: var(--bg-dark);
+}
+
+/* --- 2. Layout & Global Utilities --- */
 .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
@@ -20,30 +25,34 @@
     transform-origin: 50% 50%;
 }
 
-/* 2. Layout Container - Absolute Flush Join */
+#readerModal {
+    background-color: #0b1211;
+    pointer-events: auto !important;
+}
+
+/* --- 3. The Book Container (Joined Pages) --- */
 #bookContainer {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: stretch;
     width: fit-content;
-    height: 85vh;
-    max-width: 98vw;
+    height: auto;
+    max-width: calc(100vw - 40px);
     margin: auto;
     gap: 0;
-    /* Forced zero gap */
     z-index: 10;
     position: relative;
+    pointer-events: none;
 }
 
-/* Central "Deep Crease" Overlay to bridge any sub-pixel gaps */
 #bookContainer::after {
     content: '';
     position: absolute;
     left: 50%;
     top: 0;
     bottom: 0;
-    width: 2px;
+    width: 4px;
     transform: translateX(-50%);
     background: linear-gradient(to right,
             rgba(0, 0, 0, 0.1) 0%,
@@ -53,7 +62,7 @@
     pointer-events: none;
 }
 
-/* 3. Pages - Static & Joined */
+/* --- 4. Individual Pages --- */
 #pageRight,
 #pageLeft {
     position: relative;
@@ -61,72 +70,199 @@
     flex-direction: column;
     background: var(--paper-color);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    aspect-ratio: 2 / 3;
-    height: 100%;
+    width: 43vw;
     overflow: hidden;
     border: none;
+    pointer-events: auto;
+    flex-shrink: 0;
 }
 
-/* Spine Gradients - Reaching 100% height */
 #pageRight {
-    border-radius: 0 20px 20px 0;
+    border-radius: 4px 8px 8px 4px;
     background: linear-gradient(to left, var(--paper-color) 92%, var(--spine-shadow) 100%);
+    margin-left: -1px;
 }
 
 #pageLeft {
-    border-radius: 20px 0 0 20px;
+    border-radius: 8px 4px 4px 8px;
     background: linear-gradient(to right, var(--paper-color) 92%, var(--spine-shadow) 100%);
+    margin-right: -1px;
 }
 
-/* 4. API Image Display - Background Transparent to show spine */
-.page-image-container {
-    flex: 1;
+/* --- 5. Image Display & Container --- */
+/* Ensure your HTML uses these IDs/Classes for the padding to work */
+#pageRight,
+#pageLeft {
+    padding: 1.5rem 1.5rem;
+    /* The whitespace frame */
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem 1rem 3.5rem 1rem;
-    background: transparent !important;
-    /* Prevents masking the shadow */
 }
 
 .quran-img {
-    width: 100%;
-    height: 100%;
+    /* Changed from % to max-constraints to allow whitespace on all sides */
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
-    display: block;
-    transition: opacity 0.2s ease;
+    display: block !important;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    filter: sepia(0.05) contrast(1.02);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.quran-img.loaded {
+    opacity: 1 !important;
+}
+
+/* --- 6. Navigation Controls --- */
+.nav-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    pointer-events: auto;
+}
+
+.nav-zone.right-0 {
+    right: 0;
+    justify-content: flex-start;
+    padding-right: 1rem;
+}
+
+.nav-zone.left-0 {
+    left: 0;
+    justify-content: flex-end;
+    padding-left: 1rem;
+}
+
+.nav-zone:hover {
+    background: rgba(45, 212, 191, 0.02);
+}
+
+.nav-arrow {
+    font-size: 4vw;
+    color: rgba(45, 212, 191, 0.1);
+    transition: all 0.3s ease;
+}
+
+.nav-zone:hover .nav-arrow {
+    color: rgba(45, 212, 191, 0.6);
+    transform: scale(1.2);
+}
+
+/* --- 7. Physical Bookmark --- */
+#physicalBookmark {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    width: 35px;
+    height: 180px;
+    background: var(--bookmark-red);
+    z-index: 100;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 90%, 0% 100%);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.bookmark-active {
+    transform: translate(-50%, 0px) !important;
+}
+
+.bookmark-ahead {
+    transform: translate(calc(-50% - 150px), -140px) rotate(-5deg) !important;
+    opacity: 0.4;
+}
+
+.bookmark-behind {
+    transform: translate(calc(-50% + 150px), -140px) rotate(5deg) !important;
+    opacity: 0.4;
+}
+
+/* --- 8. Unified Mobile View --- */
+@media (max-width: 768px) {
+    #pageLeft {
+        display: none !important;
+    }
+
+    #bookContainer {
+        width: 100vw;
+        max-width: 100vw;
+        padding: 0 15px;
+        touch-action: none;
+        pointer-events: auto !important;
+    }
+
+    #pageRight {
+        width: 130% !important;
+        height: auto;
+        border-radius: 8px;
+        background: var(--paper-color);
+        padding: 1.5rem 1rem;
+        /* Smaller whitespace for mobile */
+    }
+
+    #bookContainer::after {
+        display: none;
+    }
+
+    #physicalBookmark {
+        width: 28px;
+        height: 120px;
+        left: 88% !important;
+    }
+}
+
+/* Footer & Input Cleanup */
+.page-footer {
+    padding: 0.5rem;
+    text-align: center;
+    z-index: 20;
+}
+
+#gotoPageInput::-webkit-inner-spin-button,
+#gotoPageInput::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quran-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block !important;
+
+    /* Standard properties browsers understand */
+    pointer-events: none;
+    /* Clicks go through the image to the page */
+    user-select: none;
+    /* Prevents text highlighting */
+    -webkit-user-drag: none;
+    /* Works for Chrome/Edge/Safari/Brave */
+
+    transition: opacity 0.3s ease;
     opacity: 0;
     filter: sepia(0.05) contrast(1.02);
 }
 
-.quran-img.loaded {
-    opacity: 1;
+:root {
+    --bookmark-red: #991b1b;
 }
 
-/* 5. Page Footer - Masking Removed */
-.page-footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 0.8rem;
-    text-align: center;
-    /* Use a very light transparent gradient only for the text legibility */
-    background: linear-gradient(to top, rgba(244, 241, 234, 0.3) 0%, transparent 100%);
-    z-index: 20;
-    pointer-events: none;
-}
-
-#numRight,
-#numLeft {
-    font-family: 'Amiri', serif;
-    font-size: 1.1rem;
-    color: #1a202c;
-    opacity: 0.5;
-    font-weight: bold;
-}
-
-/* 6. Physical Bookmark */
 #physicalBookmark {
     position: absolute;
     top: -15px;
@@ -134,7 +270,13 @@
     width: 35px;
     height: 220px;
     background: var(--bookmark-red);
+
+    /* 1. Higher than .nav-zone (5) and #bookContainer (20) */
     z-index: 100;
+
+    /* 2. Forces this element to be clickable even if container isn't */
+    pointer-events: auto !important;
+
     transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
     cursor: pointer;
     clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 90%, 0% 100%);
@@ -143,196 +285,59 @@
     justify-content: center;
 }
 
+/* Bookmark is on the current visible page */
 .bookmark-active {
     transform: translate(-50%, 0px) !important;
 }
 
+/* Bookmark is at a later page (slides left and hides) */
 .bookmark-ahead {
     transform: translate(calc(-50% - 240px), -30px) rotate(-5deg) !important;
     opacity: 0.6;
 }
 
+/* Bookmark is at an earlier page (slides right and hides) */
 .bookmark-behind {
     transform: translate(calc(-50% + 240px), -30px) rotate(5deg) !important;
     opacity: 0.6;
 }
 
-/* 7. Mobile View */
+/* Mobile Adjustments */
 @media (max-width: 768px) {
-    #pageLeft {
-        display: none !important;
-    }
-
-    #bookContainer {
-        width: 95vw;
-        height: 82vh;
-    }
-
-    #pageRight {
-        border-radius: 15px;
-        aspect-ratio: auto;
-    }
-
-    #bookContainer::after {
-        display: none;
-    }
-
-    /* No crease on single page */
     #physicalBookmark {
-        width: 28px;
-        height: 160px;
-        left: 88%;
+        width: 25px;
+        height: 120px;
+        left: 85% !important;
+        /* Move to side on mobile */
+        top: -10px;
     }
 
     .bookmark-ahead,
     .bookmark-behind {
         transform: translateY(-130px) !important;
+        /* Hide upwards on mobile */
     }
 }
 
-.quran-img {
-    display: block !important;
-    max-width: 100%;
-    height: auto;
-    /* Ensure opacity isn't stuck at 0 */
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
+#physicalBookmark {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    width: 35px;
+    height: 220px;
+    background: #991b1b;
+    /* Your bookmark color */
 
-.quran-img.loaded {
-    opacity: 1 !important;
-}
+    /* CRUCIAL: Must be higher than nav-zones (5) and images */
+    /* z-index: 150; */
 
-/* Sidebar Button Positioning */
-#readerModal button {
+    /* CRUCIAL: Allows clicks even if parent container blocks them */
+    pointer-events: auto !important;
+
     cursor: pointer;
-    user-select: none;
-}
-
-/* Ensure the book container doesn't squash when buttons are present */
-#bookContainer {
-    max-width: calc(100vw - 150px);
-    /* Leave room for side buttons */
-}
-
-/* --- Mobile View Adjustments --- */
-@media (max-width: 768px) {
-    #pageLeft {
-        display: none !important;
-        /* Keep only right page */
-    }
-
-    #bookContainer {
-        width: 100vw;
-        height: 80vh;
-        max-width: 100vw;
-        padding: 0 10px;
-    }
-
-    #pageRight {
-        border-radius: 15px;
-        width: 100%;
-        background: var(--paper-color);
-        /* Remove spine gradient on mobile */
-    }
-
-    /* Move bookmark to the top-right of the single page */
-    #physicalBookmark {
-        width: 25px;
-        height: 120px;
-        left: 85% !important;
-        top: -10px;
-    }
-
-    /* Hide the central crease on mobile */
-    #bookContainer::after {
-        display: none;
-    }
-
-    /* Adjust Navigation Arrows for thumb reach */
-    .nav-arrow {
-        font-size: 2.5rem;
-        opacity: 0.3;
-    }
-}
-
-/* Hide arrows in number input */
-#gotoPageInput::-webkit-inner-spin-button,
-#gotoPageInput::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* --- Disable Nav Zones on Mobile --- */
-@media (max-width: 768px) {
-    .nav-zone {
-        display: none !important;
-        /* Hide the click zones on mobile */
-    }
-
-    #bookContainer {
-        pointer-events: auto !important;
-        /* Ensure the container catches swipes */
-        touch-action: none;
-        /* Prevents browser pull-to-refresh while swiping */
-    }
-}
-
-@media (max-width: 768px) {
-
-    /* Kill the click zones */
-    .nav-zone {
-        display: none !important;
-    }
-
-    /* Force the container to be the primary touch target */
-    #bookContainer {
-        pointer-events: auto !important;
-        touch-action: none;
-        /* Crucial: stops the browser from scrolling/bouncing */
-        width: 100vw;
-        height: 80vh;
-        display: flex;
-        justify-content: center;
-    }
-
-    #pageRight {
-        pointer-events: auto !important;
-        width: 90%;
-        /* Give it some breathing room */
-    }
-
-    /* Prevent the image from "stealing" the touch event */
-    .quran-img {
-        pointer-events: none;
-        user-select: none;
-    }
-}
-
-@media (max-width: 768px) {
-
-    /* Make sure the modal itself doesn't block events */
-    #readerModal {
-        pointer-events: auto !important;
-    }
-
-    /* This was likely blocking your swipes */
-    #bookContainer {
-        pointer-events: auto !important;
-        touch-action: none;
-        /* Stops the browser from trying to scroll the whole page */
-    }
-
-    #pageRight {
-        pointer-events: auto !important;
-        /* Ensure the page fills the swipe area */
-        width: 100%;
-        height: 100%;
-    }
-
-    /* Images often "grab" the touch and try to drag the file. Disable that. */
-    .quran-img {
-        pointer-events: none !important;
-        -webkit-user-drag: none;
-    }
+    transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 90%, 0% 100%);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
 }
