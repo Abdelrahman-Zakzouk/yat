@@ -470,3 +470,9 @@ input:-webkit-autofill:active {
   text-align: right;
   direction: rtl;
 }
+
+#ayahInput::-webkit-inner-spin-button,
+#ayahInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

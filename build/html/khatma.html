@@ -4,54 +4,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رحلة الختمة | Yatlo</title>
+    <title>رحلة الختمة | يتلو</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Rakkas&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+
     <link rel="stylesheet" href="../css/khatma.css">
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Rakkas&display=swap"
-        rel="stylesheet">
+
+    <style>
+        /* Essential Overrides for the "Whole Area" Navigation */
+        #readerModal {
+            background-color: #0b1211;
+        }
+
+        .nav-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            /* Each zone takes half the screen */
+            z-index: 5;
+            /* Below the book container */
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .nav-zone.right-0 {
+            right: 0;
+            justify-content: flex-end;
+            padding-right: 2rem;
+        }
+
+        .nav-zone.left-0 {
+            left: 0;
+            justify-content: flex-start;
+            padding-left: 2rem;
+        }
+
+        /* Subtle hover feedback for the navigation areas */
+        .nav-zone:hover {
+            background: rgba(45, 212, 191, 0.02);
+        }
+
+        .nav-arrow {
+            font-size: 3.5rem;
+            color: rgba(45, 212, 191, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .nav-zone:hover .nav-arrow {
+            color: rgba(45, 212, 191, 0.6);
+            transform: scale(1.2);
+        }
+
+        /* Book Container Layering */
+        #bookContainer {
+            position: relative;
+            z-index: 20;
+            /* Higher than nav-zones */
+            display: flex;
+            pointer-events: none;
+            /* Let clicks pass to nav-zones in empty spaces */
+        }
+
+        #bookContainer>div,
+        #physicalBookmark {
+            pointer-events: auto;
+            /* Re-enable clicks for the actual Mushaf pages */
+        }
+
+        .quran-img {
+            pointer-events: none;
+            /* Prevents dragging the image file itself */
+            user-select: none;
+        }
+
+        /* Hide number input arrows */
+        #gotoPageInput::-webkit-inner-spin-button,
+        #gotoPageInput::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
 </head>
 
-<body>
+<body class="bg-[#0f1a19] text-slate-200 min-h-screen overflow-x-hidden">
 
-    <div class="khatma-wrapper">
-        <header class="journey-header">
-            <h1 class="font-rakkas">رحلة الختمة</h1>
-            <p class="subtitle">وسارعوا إلى مغفرة من ربكم</p>
-        </header>
+    <header class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 glass sticky top-0 z-50">
+        <a class="text-3xl font-['Rakkas'] text-teal-400" href="/index.html">يتلو</a>
 
-        <div id="khatmaDashboard" class="khatma-container">
-            <div class="shimmer-card"></div>
+        <div id="streakBadge"
+            class="hidden flex items-center gap-1 bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-sm border border-orange-500/30">
+            <ion-icon name="flame"></ion-icon>
+            <span id="streakCount">0</span> يوم
         </div>
+    </header>
 
-        <div class="journey-actions">
-            <button onclick="openSetupModal()" class="action-btn secondary">إعداد ختمة جديدة</button>
-            <button onclick="window.location.href='/index.html'" class="action-btn primary">العودة للمصحف</button>
-        </div>
-    </div>
+    <main class="max-w-5xl mx-auto p-6">
+        <section id="setupSection" class="hidden space-y-8 py-10">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-white mb-2">ابدأ رحلة ختمة جديدة</h1>
+                <p class="text-teal-500">وذكر فإن الذكرى تنفع المؤمنين</p>
+            </div>
 
-    <div id="setupKhatmaModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 class="font-rakkas">ابدأ رحلة جديدة</h2>
-            <p style="color: #94a3b8; margin-bottom: 20px;">اختر المدة الزمنية للختمة:</p>
-            <div class="options-grid">
-                <button onclick="createNewJourney(30)" class="opt-card">
-                    <span class="days">٣٠</span>
-                    <span class="label">يوماً</span>
-                </button>
-                <button onclick="createNewJourney(60)" class="opt-card">
-                    <span class="days">٦٠</span>
-                    <span class="label">يوماً</span>
-                </button>
-                <button onclick="createNewJourney(90)" class="opt-card">
-                    <span class="days">٩٠</span>
-                    <span class="label">يوماً</span>
+            <div class="bg-[#1a2e2c] border border-teal-800 rounded-3xl p-8 shadow-2xl">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <label class="block text-sm text-teal-400">كم يوماً تنوي للختمة؟</label>
+                        <input type="number" id="daysInput" placeholder="مثلاً: 30"
+                            class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white outline-none focus:border-teal-400">
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block text-sm text-teal-400">أين وصلت حالياً؟ (رقم الصفحة)</label>
+                        <input type="number" id="startPage" value="1" min="1" max="604"
+                            class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white outline-none focus:border-teal-400">
+                    </div>
+                </div>
+                <button onclick="engine.createNewJourney()"
+                    class="w-full mt-8 bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg">
+                    اعتماد الختمة
                 </button>
             </div>
-            <button onclick="closeSetupModal()" class="close-link">إلغاء</button>
+        </section>
+
+        <section id="dashboardSection" class="hidden space-y-6">
+            <div
+                class="bg-[#1a2e2c] border border-teal-800 rounded-3xl p-6 flex flex-col md:flex-row items-center gap-8">
+                <div class="relative w-32 h-32 shrink-0">
+                    <svg class="w-full h-full">
+                        <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent"
+                            class="text-teal-900/30" />
+                        <circle id="progressCircle" cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8"
+                            fill="transparent" stroke-dasharray="364.4" stroke-dashoffset="364.4"
+                            class="text-teal-400 transition-all duration-700 ease-in-out" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center font-bold text-xl" id="percentText">0%
+                    </div>
+                </div>
+
+                <div class="flex-1 text-center md:text-right space-y-2">
+                    <h2 class="text-2xl font-bold text-white">هدفك اليومي</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-[#0f1a19] p-3 rounded-2xl border border-teal-800/50">
+                            <span class="block text-teal-500 text-xs">صفحات يومياً</span>
+                            <span id="pagesPerDay" class="text-xl font-bold">0</span>
+                        </div>
+                        <div class="bg-[#0f1a19] p-3 rounded-2xl border border-teal-800/50">
+                            <span class="block text-teal-500 text-xs">صفحات لكل صلاة</span>
+                            <span id="pagesPerSalah" class="text-xl font-bold">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="Reader.open()"
+                    class="bg-teal-600 hover:bg-teal-500 text-white p-6 rounded-2xl flex flex-col items-center shrink-0 w-full md:w-auto">
+                    <ion-icon name="book-outline" class="text-2xl mb-1"></ion-icon>
+                    <span class="font-bold">ابدأ القراءة</span>
+                </button>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-[#162927] p-4 rounded-2xl border border-teal-800/30 text-center">
+                    <p class="text-gray-400 text-xs mb-1">الصفحة الحالية</p>
+                    <p id="currentPageDisp" class="text-xl font-bold">١</p>
+                </div>
+                <div class="bg-[#162927] p-4 rounded-2xl border border-teal-800/30 text-center">
+                    <p class="text-gray-400 text-xs mb-1">الأيام المتبقية</p>
+                    <p id="daysLeftDisp" class="text-xl font-bold">٠</p>
+                </div>
+                <button onclick="engine.resetJourney()"
+                    class="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-red-400 text-xs flex items-center justify-center gap-1 hover:bg-red-500/20 transition">
+                    <ion-icon name="refresh-outline"></ion-icon>
+                    إعادة ضبط الختمة
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <div id="readerModal" class="fixed inset-0 z-[100] hidden flex flex-col h-screen overflow-hidden">
+
+        <div class="p-4 glass border-b border-teal-900/30 flex justify-between items-center shrink-0 z-[120]">
+            <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
+                href="/index.html">يتلو</a>
+
+
+            <div class="flex items-center gap-2 bg-teal-900/20 px-3 py-1 rounded-full border border-teal-800/50">
+                <input type="number" id="gotoPageInput" min="1" max="604" placeholder="رقم الصفحة..."
+                    class="bg-transparent text-white w-20 text-center outline-none text-sm font-bold"
+                    onkeydown="if(event.key==='Enter') Reader.jumpToPage()">
+                <button onclick="Reader.jumpToPage()" class="text-teal-400 hover:text-white flex items-center">
+                    <ion-icon name="search-outline"></ion-icon>
+                </button>
+            </div>
+
+            <button onclick="Reader.close()" class="text-2xl hover:text-red-400 transition text-white">
+                <ion-icon name="close-outline"></ion-icon>
+            </button>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center relative px-4 overflow-hidden">
+
+            <div onclick="Reader.changeSpread(-1)" class="nav-zone right-0 group">
+                <div class="nav-arrow"><ion-icon name="chevron-forward-outline"></ion-icon></div>
+            </div>
+
+            <div onclick="Reader.changeSpread(1)" class="nav-zone left-0 group">
+                <div class="nav-arrow"><ion-icon name="chevron-back-outline"></ion-icon></div>
+            </div>
+
+            <div id="bookContainer">
+                <div id="physicalBookmark" onclick="Reader.goToBookmark()">
+                    <div class="flex flex-col items-center pt-2 text-white/50">
+                        <ion-icon name="bookmark"></ion-icon>
+                    </div>
+                </div>
+
+                <div id="pageRight" class="relative" onclick="Reader.saveBookmarkHere('right')">
+                    <div class="page-image-container p-2">
+                        <img id="imgRight" class="quran-img" src="">
+                    </div>
+                </div>
+
+                <div id="pageLeft" class="relative" onclick="Reader.saveBookmarkHere('left')">
+                    <div class="page-image-container p-2">
+                        <img id="imgLeft" class="quran-img" src="">
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/khatma.js"></script>
+    <script src="/build/js/api-filter.js"></script>
+    <script src="/build/js/khatma.js"></script>
 </body>
 
 </html>

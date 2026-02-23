@@ -483,4 +483,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Ensure you have Supabase initialized in index.html as well
+async function checkActiveKhatma() {
+  const { data, error } = await sb
+    .from('khatma_progress')
+    .select('current_page, journey_name')
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (data) {
+    const widget = document.getElementById('resumeWidget');
+    const text = document.getElementById('resumeStatusText');
+
+    widget.classList.remove('hidden');
+    text.innerText = `وصلت إلى صفحة ${data.current_page}`;
+  }
+}
+
+// Run on load
+document.addEventListener('DOMContentLoaded', checkActiveKhatma);
+
 initSurahData();
