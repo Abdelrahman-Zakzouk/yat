@@ -8,7 +8,6 @@ const HadithEngine = {
     BOOKS: {
         "ara-bukhari": { name: "صحيح البخاري" },
         "ara-muslim": { name: "صحيح مسلم" },
-        "ara-nasai": { name: "سنن النسائي" }
     },
     currentData: null
 };
