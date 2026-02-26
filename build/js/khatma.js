@@ -372,4 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { passive: true });
     }
+    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+        Reader.changePage(-1);
+    });
+
+    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
+        Reader.changePage(1);
+    });
 });
