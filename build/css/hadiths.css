@@ -1,35 +1,110 @@
+/* --- Global Styles --- */
 body {
-    font-family: 'Amiri', serif;
-    background-color: #0f1716;
+    background: radial-gradient(circle at top right, #1a2e2c, #0b1413);
+    background-attachment: fixed;
     color: #e2e8f0;
+    font-family: 'Amiri', serif;
+    overflow-x: hidden;
 }
 
-.rakkas {
+#shareCanvas {
+    display: none !important;
+    /* Prevents the large image below hadith issue */
+}
+
+/* --- Typography --- */
+.quran-font {
+    font-family: "Amiri Quran", "Amiri", serif;
+    line-height: 2.2 !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+/* --- Modals --- */
+#shareModal,
+#indexModal {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#shareModal.active,
+#indexModal.active {
+    opacity: 1 !important;
+}
+
+#shareModal>div,
+#indexModal>div {
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#shareModal.active>div,
+#indexModal.active>div {
+    transform: scale(1);
+}
+
+/* --- Utilities --- */
+.hadith-display-area {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#toast {
+    transition: all 0.4s ease;
+}
+
+#hadithNotePanel {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 2rem auto;
+    width: 100%;
+}
+
+
+/* 2. The Card - Solid Match + Wide Layout */
+.lesson-container {
+    width: 100%;
+    max-width: 1000px;
+    /* Expands to match main section width */
+    margin: 0 auto;
+    padding: 2.5rem 3rem;
+
+    /* Mimic Verse BG: Solid deep matte, no gradient */
+    background-color: #1a2422;
+
+    /* Visual styling and Rounding */
+    border-radius: 20px;
+    border: 1px solid rgba(45, 212, 191, 0.2);
+    border-right: 8px solid #2dd4bf;
+    /* Teal accent line */
+
+    /* Fix: Clips content to rounded edges */
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.lesson-title {
     font-family: 'Rakkas', serif;
+    color: #2dd4bf;
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    direction: rtl;
 }
 
-.glass {
-    background: rgba(20, 35, 34, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(45, 212, 191, 0.1);
-}
-
-.loader {
-    width: 24px;
-    height: 24px;
-    border: 3px solid #0d9488;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+.lesson-text {
+    font-family: 'Amiri', serif;
+    line-height: 2.2;
+    color: #e2e8f0;
+    font-size: 1.35rem;
+    text-align: right;
+    direction: rtl;
 }

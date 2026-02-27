@@ -6,334 +6,216 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>يتلو | الأحاديث الشريفة</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
         rel="stylesheet" />
-    <style>
-        body {
-            font-family: 'Amiri', serif;
-            background-color: #0f1a19;
-            color: #cbd5e1;
-        }
-
-        .hadith-text {
-            line-height: 2.2;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        #shareCanvas {
-            display: none;
-        }
-
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-    </style>
+    <link rel="stylesheet" href="/build/css/hadiths.css">
 </head>
 
-<body class="min-h-screen">
+<body class="min-h-screen flex flex-col bg-[#0b1413]">
 
     <header
         class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 bg-[#162927]/80 backdrop-blur-md sticky top-0 z-50">
         <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
-            href="../../index.html">يتلو</a>
-        <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-            <button onclick="openIndex()" class="hover:text-teal-400 transition flex items-center gap-2">
-                <ion-icon name="grid-outline"></ion-icon>
-                <span>القائمة</span>
-            </button>
-        </nav>
-        <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
+            href="/index.html">يتلو</a>
+        <button onclick="openIndex()" class="text-teal-400 text-3xl">
             <ion-icon name="menu-outline"></ion-icon>
         </button>
     </header>
 
-    <main class="max-w-5xl mx-auto px-6 py-8">
-        <div
-            class="flex flex-wrap items-center justify-center gap-4 mb-10 bg-[#162927]/50 p-5 rounded-3xl border border-teal-800/30 shadow-xl">
-            <div class="flex items-center gap-3">
-                <label class="text-teal-400 text-sm font-bold">المصدر الشريف:</label>
-                <select id="bookSelect" onchange="getNewHadith()"
-                    class="bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-2 text-white focus:border-teal-400 outline-none cursor-pointer text-sm">
-                    <option value="ara-bukhari">صحيح البخاري</option>
-                    <option value="ara-muslim">صحيح مسلم</option>
-                </select>
+    <main class="max-w-4xl mx-auto px-6 py-12 flex-grow w-full">
+        <div class="flex justify-center mb-6">
+            <div class="bg-[#162927] p-1 rounded-full border border-teal-800/50 flex items-center relative w-64 h-12">
+                <div id="toggleBg"
+                    class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-teal-600 rounded-full transition-all duration-300 shadow-lg">
+                </div>
+                <button onclick="setMode('daily')"
+                    class="relative z-10 flex-1 text-sm font-bold transition-colors duration-300 text-white"
+                    id="btn-daily">حديث
+                    اليوم</button>
+                <button onclick="setMode('random')"
+                    class="relative z-10 flex-1 text-sm font-bold text-slate-500 transition-colors duration-300"
+                    id="btn-random">حديث عشوائي</button>
             </div>
-            <button onclick="getNewHadith()"
-                class="bg-teal-600 hover:bg-teal-500 text-white px-8 py-2 rounded-xl transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-teal-900/40 font-bold">
-                <ion-icon name="refresh-outline" class="text-lg"></ion-icon>
-                <span>حديث جديد</span>
+        </div>
+
+        <div id="randomControls"
+            class="hidden flex flex-wrap items-center justify-center gap-4 mb-10 bg-[#162927]/50 p-4 rounded-3xl border border-teal-800/30">
+            <select id="bookSelect" onchange="fetchRandomHadith()"
+                class="bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-2 text-white outline-none text-sm">
+                <option value="ara-bukhari">صحيح البخاري</option>
+                <option value="ara-muslim">صحيح مسلم</option>
+            </select>
+            <button onclick="fetchRandomHadith()"
+                class="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2 rounded-xl transition-all active:scale-95 font-bold flex items-center gap-2 shadow-lg shadow-teal-900/20">
+                <ion-icon name="refresh-outline"></ion-icon> حديث جديد
             </button>
         </div>
 
-        <section class="relative group min-h-[500px]">
+        <section class="relative group">
             <div
-                class="absolute -inset-1 bg-gradient-to-r from-teal-600/20 to-emerald-600/20 rounded-[2.5rem] blur-2xl opacity-75 group-hover:opacity-100 transition duration-1000">
+                class="absolute -inset-1 bg-gradient-to-r from-teal-600 to-emerald-600 rounded-[2.5rem] blur opacity-25 group-hover:opacity-40 transition duration-1000">
             </div>
             <div
-                class="relative bg-[#1a2e2c]/90 backdrop-blur-xl border border-teal-800/50 rounded-[2.5rem] p-8 md:p-16 flex flex-col items-center shadow-2xl min-h-[500px]">
+                class="relative bg-[#1a2e2c] border border-teal-800/50 rounded-[2.5rem] p-8 md:p-16 flex flex-col items-center shadow-2xl">
 
-                <div class="w-full flex justify-between items-center mb-10">
-                    <div
-                        class="flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 px-4 py-1.5 rounded-full">
-                        <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                        <span class="text-emerald-400 text-[10px] font-black uppercase tracking-widest">صحيح</span>
-                    </div>
-                    <h2 id="hadithMeta"
-                        class="text-teal-500/70 font-bold text-sm md:text-base font-['Amiri'] tracking-wide italic">...
-                    </h2>
+                <div class="w-full flex justify-between items-center mb-8">
+                    <span id="badgeText"
+                        class="bg-teal-500/10 text-teal-400 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest border border-teal-500/20">حديث
+                        شريف</span>
+                    <span id="hadithMeta" class="text-teal-500/60 text-sm italic font-['Amiri']">جاري التحميل...</span>
                 </div>
 
-                <div class="w-full flex-grow flex items-center justify-center py-6">
+                <div class="hadith-display-area w-full">
                     <p id="hadithText"
-                        class="hadith-text text-2xl md:text-4xl text-center text-white font-['Amiri'] transition-opacity duration-500">
-                        جاري تحميل الحديث الشريف...
+                        class="text-2xl md:text-4xl text-white quran-font leading-[3rem!important] transition-opacity duration-300">
+                        ...
                     </p>
                 </div>
 
-                <div class="mt-12 flex flex-wrap justify-center gap-4 w-full pt-8 border-t border-teal-800/20">
+                <div class="mt-10 flex flex-wrap justify-center gap-4 w-full border-t border-teal-800/20 pt-8">
                     <button onclick="shareHadithText()"
-                        class="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-white px-8 py-3 rounded-2xl border border-white/10 transition-all active:scale-95">
-                        <ion-icon name="copy-outline" class="text-xl text-teal-500"></ion-icon>
-                        <span class="text-sm font-bold uppercase tracking-wider">نسخ النص</span>
+                        class="flex items-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 px-6 py-3 rounded-2xl border border-teal-800/50 transition-all active:scale-95">
+                        <ion-icon name="copy-outline"></ion-icon>
+                        <span class="text-sm font-bold">نسخ النص</span>
                     </button>
+
                     <button onclick="shareAsImage()"
-                        class="flex items-center gap-3 bg-teal-600 hover:bg-teal-500 text-white px-8 py-3 rounded-2xl transition-all active:scale-95 shadow-lg">
-                        <ion-icon name="share-social-outline" class="text-xl"></ion-icon>
-                        <span class="text-sm font-bold uppercase tracking-wider">مشاركة الحديث</span>
+                        class="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-3 rounded-2xl transition-all active:scale-95 shadow-lg shadow-teal-900/40">
+                        <ion-icon name="image-outline"></ion-icon>
+                        <span class="text-sm font-bold">مشاركة كصورة</span>
                     </button>
                 </div>
+            </div>
+
+            <div id="hadithNotePanel" class="hidden mt-6 p-4 bg-teal-900/20 border border-teal-500/30 rounded-2xl">
+                <p id="hadithNoteContent" class="text-slate-300 text-sm leading-relaxed"></p>
             </div>
         </section>
     </main>
 
     <div id="shareModal"
-        class="hidden fixed inset-0 z-[100] items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div class="bg-[#12211f] w-full max-w-md rounded-3xl overflow-hidden border border-teal-500/20 shadow-2xl">
+        class="hidden fixed inset-0 z-[100] items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-[#12211f] w-full max-w-md rounded-3xl overflow-hidden border border-teal-500/20 shadow-2xl transform scale-95 transition-transform duration-300"
+            id="shareModalContent">
             <div class="p-2">
                 <img id="previewImage" class="w-full rounded-2xl shadow-lg border border-white/5" alt="Hadith Preview">
             </div>
-            <div class="p-6 grid grid-cols-3 gap-4">
-                <button onclick="copyImageToClipboard()" class="flex flex-col items-center gap-2 group">
-                    <div
-                        class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-teal-500/20 transition-all">
-                        <ion-icon name="copy-outline" class="text-xl text-teal-400"></ion-icon>
-                    </div>
-                    <span class="text-[10px] text-gray-400 uppercase tracking-widest">Copy</span>
+
+            <div class="p-6 grid grid-cols-2 gap-4">
+                <button onclick="copyImageToClipboard()"
+                    class="flex flex-col items-center gap-2 group bg-white/5 p-4 rounded-2xl hover:bg-teal-500/10 transition-all">
+                    <ion-icon name="copy-outline" class="text-2xl text-teal-400"></ion-icon>
+                    <span class="text-[10px] text-gray-400 uppercase tracking-widest">نسخ الصورة</span>
                 </button>
-                <button onclick="triggerNativeShare()" class="flex flex-col items-center gap-2 group">
-                    <div
-                        class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-green-500/20 transition-all">
-                        <ion-icon name="logo-whatsapp" class="text-xl text-green-400"></ion-icon>
-                    </div>
-                    <span class="text-[10px] text-gray-400 uppercase tracking-widest">WhatsApp</span>
-                </button>
-                <button onclick="triggerNativeShare()" class="flex flex-col items-center gap-2 group">
-                    <div
-                        class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-500/20 transition-all">
-                        <ion-icon name="logo-facebook" class="text-xl text-blue-400"></ion-icon>
-                    </div>
-                    <span class="text-[10px] text-gray-400 uppercase tracking-widest">Facebook</span>
+
+                <button onclick="triggerNativeShare()"
+                    class="flex flex-col items-center gap-2 group bg-teal-600 p-4 rounded-2xl hover:bg-teal-500 transition-all">
+                    <ion-icon name="share-social-outline" class="text-2xl text-white"></ion-icon>
+                    <span class="text-[10px] text-white uppercase tracking-widest">إرسال للجوال</span>
                 </button>
             </div>
+
             <button onclick="closeModal()"
-                class="w-full py-4 bg-white/5 text-gray-400 text-sm font-bold hover:bg-red-500/10 border-t border-white/5 transition-all">إغلاق</button>
+                class="w-full py-4 bg-white/5 text-gray-400 text-sm font-bold hover:bg-red-500/10 hover:text-red-400 transition-all border-t border-white/5">
+                إغلاق
+            </button>
         </div>
-    </div>
-
-    <canvas id="shareCanvas"></canvas>
-
-    <div id="toast"
-        class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-8 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-[200] flex items-center gap-3">
-        <ion-icon name="checkmark-circle" class="text-xl"></ion-icon>
-        <span id="toastMessage" class="text-sm font-bold"></span>
     </div>
 
     <div id="indexModal"
         class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/95 p-4 backdrop-blur-md">
         <div
-            class="bg-[#1a2e2c] border border-teal-800 w-full max-w-4xl h-[85vh] rounded-[3rem] flex flex-col overflow-hidden">
-            <div class="p-8 border-b border-teal-800/50 flex justify-between items-center bg-[#162927]">
-                <h2 class="text-3xl font-['Rakkas'] text-teal-400">يتلو</h2>
-                <button onclick="closeIndex()"
-                    class="text-slate-400 text-4xl hover:rotate-90 transition-transform"><ion-icon
-                        name="close-outline"></ion-icon></button>
+            class="bg-[#1a2e2c] border border-teal-800 w-full max-w-4xl h-[90vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+
+            <div class="p-6 border-b border-teal-800/50 flex justify-between items-center bg-[#162927]">
+                <h2 class="text-2xl font-['Rakkas'] text-teal-400">القائمة</h2>
+                <button onclick="closeIndex()" class="text-slate-400 hover:text-white text-3xl">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
             </div>
-            <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="../../index.html"
-                    class="flex flex-col items-center p-4 bg-teal-900/20 rounded-2xl border border-teal-700/30">
-                    <ion-icon name="home-outline" class="text-teal-400 text-2xl mb-2"></ion-icon>
-                    <span class="font-bold text-sm">الرئيسية</span>
-                </a>
-                <a href="khatma.html"
-                    class="flex flex-col items-center p-4 bg-teal-900/20 rounded-2xl border border-teal-700/30">
-                    <ion-icon name="flag-outline" class="text-teal-400 text-2xl mb-2"></ion-icon>
-                    <span class="font-bold text-sm">الختمة</span>
-                </a>
-                <a href="duas.html"
-                    class="flex flex-col items-center p-4 bg-teal-900/20 rounded-2xl border border-teal-700/30">
-                    <ion-icon name="heart-outline" class="text-teal-400 text-2xl mb-2"></ion-icon>
-                    <span class="font-bold text-sm">الأدعية</span>
-                </a>
+
+            <div class="p-2 grid grid-cols-3 gap-1.5 bg-[#162927]/30 border-b border-teal-800/30">
+
+                <button onclick="closeIndex(); window.scrollTo({top: 0, behavior: 'smooth'});"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/40 rounded-lg border border-teal-700/30 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="home-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الرئيسية</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Home</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/history.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="time-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">سجل الآيات</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">History</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/wird.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-500/10 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all active:scale-95">
+                    <ion-icon name="calendar-clear-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الورد اليومي</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Wird</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/khatma.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="flag-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">رحلة الختمة</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Khatma</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/hadiths.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="book-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الأحاديث</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Hadiths</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/duas.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="heart-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الأدعية</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Duas</span>
+                    </div>
+                </button>
+
+            </div>
+
+            <div class="p-4 bg-[#162927]/50">
+                <h3 class="text-teal-500 text-xs mb-2 px-1 font-bold uppercase tracking-widest">فهرس السور</h3>
+                <input type="text" id="indexSearch" oninput="renderIndex()" placeholder="ابحث عن سورة..."
+                    class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white focus:border-teal-400 outline-none">
+            </div>
+
+            <div id="indexGrid"
+                class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 custom-scrollbar">
             </div>
         </div>
     </div>
 
-    <script>
-        const HadithEngine = {
-            BASE_URL: "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/",
-            BOOKS: {
-                "ara-bukhari": { name: "صحيح البخاري" },
-                "ara-muslim": { name: "صحيح مسلم" },
-            },
-            currentData: null
-        };
+    <canvas id="shareCanvas" class="hidden"></canvas>
 
-        // --- Core Fetching ---
-        async function fetchRandomHadith() {
-            const textEl = document.getElementById('hadithText');
-            const bookSelect = document.getElementById('bookSelect');
-            if (textEl) textEl.style.opacity = "0.3";
+    <div id="toast"
+        class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-[200] flex items-center gap-2">
+        <ion-icon name="checkmark-circle"></ion-icon><span id="toastMessage"></span>
+    </div>
 
-            try {
-                const response = await fetch(`${HadithEngine.BASE_URL}${bookSelect.value}.json`);
-                const data = await response.json();
-                const randomEntry = data.hadiths[Math.floor(Math.random() * data.hadiths.length)];
-
-                HadithEngine.currentData = {
-                    text: randomEntry.text || randomEntry.hadith,
-                    number: randomEntry.hadithnumber,
-                    bookName: HadithEngine.BOOKS[bookSelect.value].name
-                };
-
-                document.getElementById('hadithText').innerText = HadithEngine.currentData.text;
-                document.getElementById('hadithMeta').innerText = `${HadithEngine.currentData.bookName} : رقم ${HadithEngine.currentData.number}`;
-                document.getElementById('hadithText').style.opacity = "1";
-            } catch (e) {
-                showToast("تعذر تحميل الحديث");
-            }
-        }
-
-        function getNewHadith() { fetchRandomHadith(); }
-
-        // --- Modal Control (Mobile Fixed) ---
-        function shareAsImage() {
-            const modal = document.getElementById('shareModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            drawCanvas();
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('shareModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function openIndex() { document.getElementById('indexModal').classList.replace('hidden', 'flex'); }
-        function closeIndex() { document.getElementById('indexModal').classList.replace('flex', 'hidden'); }
-
-        // --- Canvas Engine ---
-        function drawCanvas() {
-            const canvas = document.getElementById('shareCanvas');
-            const ctx = canvas.getContext('2d');
-            const data = HadithEngine.currentData;
-            const preview = document.getElementById('previewImage');
-
-            canvas.width = 1080; canvas.height = 1080;
-
-            // Background
-            ctx.fillStyle = '#0b1211';
-            ctx.fillRect(0, 0, 1080, 1080);
-            const grad = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
-            grad.addColorStop(0, '#152422'); grad.addColorStop(1, '#0b1211');
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, 1080, 1080);
-
-            // Frame
-            ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 15;
-            ctx.strokeRect(40, 40, 1000, 1000);
-
-            // Text
-            ctx.textAlign = 'center'; ctx.direction = 'rtl';
-            ctx.fillStyle = '#2dd4bf'; ctx.font = '45px "Amiri", serif';
-            ctx.fillText(`${data.bookName} | رقم ${data.number}`, 540, 150);
-
-            ctx.fillStyle = 'white';
-            let fontSize = 65; let lines = []; const maxWidth = 850;
-            while (fontSize > 20) {
-                ctx.font = `bold ${fontSize}px "Amiri", serif`;
-                lines = []; let words = data.text.split(' '); let currentLine = '';
-                words.forEach(word => {
-                    let test = currentLine + word + ' ';
-                    if (ctx.measureText(test).width > maxWidth) {
-                        lines.push(currentLine.trim()); currentLine = word + ' ';
-                    } else { currentLine = test; }
-                });
-                lines.push(currentLine.trim());
-                if (lines.length * (fontSize * 1.6) < 650) break;
-                fontSize -= 3;
-            }
-
-            let y = 300 + (650 - (lines.length * (fontSize * 1.6))) / 2;
-            lines.forEach(line => { ctx.fillText(line, 540, y); y += fontSize * 1.6; });
-
-            ctx.fillStyle = '#2dd4bf'; ctx.font = '35px "Rakkas", serif';
-            ctx.fillText('تطبيق يتلو | Yatlo', 540, 1000);
-
-            preview.src = canvas.toDataURL('image/png');
-        }
-
-        // --- Sharing Logic ---
-        function shareHadithText() {
-            const data = HadithEngine.currentData;
-            const text = `﴿ حديث شريف ﴾\n\n${data.text}\n\nالمصدر: ${data.bookName}\nعبر تطبيق يتلو`;
-
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => showToast("✅ تم نسخ النص"));
-            } else {
-                const el = document.createElement('textarea');
-                el.value = text; document.body.appendChild(el); el.select();
-                document.execCommand('copy'); document.body.removeChild(el);
-                showToast("✅ تم نسخ النص");
-            }
-        }
-
-        async function copyImageToClipboard() {
-            const canvas = document.getElementById('shareCanvas');
-            try {
-                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-                const item = new ClipboardItem({ "image/png": blob });
-                await navigator.clipboard.write([item]);
-                showToast("✅ تم نسخ الصورة للحافظة");
-            } catch (e) {
-                showToast("❌ يرجى استخدام زر المشاركة");
-            }
-        }
-
-        async function triggerNativeShare() {
-            const canvas = document.getElementById('shareCanvas');
-            try {
-                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-                const file = new File([blob], 'hadith.png', { type: 'image/png' });
-                if (navigator.share) {
-                    await navigator.share({ files: [file], title: 'حديث شريف' });
-                } else {
-                    const link = document.createElement('a');
-                    link.download = 'hadith.png'; link.href = canvas.toDataURL(); link.click();
-                }
-            } catch (e) { showToast("فشلت المشاركة"); }
-        }
-
-        function showToast(m) {
-            const t = document.getElementById('toast');
-            document.getElementById('toastMessage').innerText = m;
-            t.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 2500);
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchRandomHadith);
-    </script>
+    <script src="/build/js/hadiths.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </body>
 
 </html>

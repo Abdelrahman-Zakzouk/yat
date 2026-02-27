@@ -1,7 +1,13 @@
 /**
  * يتلو | Yatlo Quran - Unified Logic
- * Features: Hamza Filtering, Dynamic Canvas Scaling, Audio, Search, and Khatma Journey.
+ * Features: Advanced Fingerprinting (Unique Visits), Hamza Filtering, 
+ * Dynamic Canvas Scaling, Audio, Search, and Khatma Journey.
  */
+
+// --- CONFIGURATION ---
+const SUPABASE_URL = 'https://ruokjdtnpraaglmewjwa.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_GqCbpZBE9aT0Tv0AY3A_6Q_utNzCQA-';
+const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- GLOBAL STATE ---
 let currentSurahNumber = null;
@@ -9,19 +15,17 @@ let currentVerseKey = null;
 let currentAudio = new Audio();
 let allSurahs = [];
 let isRandomMode = false;
-const TOTAL_QURAN_VERSES = 6236; // Added for Khatma math
-
-// --- CONFIGURATION ---
-const SUPABASE_URL = 'https://ruokjdtnpraaglmewjwa.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_GqCbpZBE9aT0Tv0AY3A_6Q_utNzCQA-';
-const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const TOTAL_QURAN_VERSES = 6236;
 
 /**
  * Applies global Hamza override filter to data strings.
- * Note: This uses the override list remembered for hamza mistypes.
  */
 function safeFilter(data) {
-  return (typeof applyHamzaFilter === 'function') ? applyHamzaFilter(data) : data;
+  if (typeof applyHamzaFilter === 'function') {
+    return applyHamzaFilter(data);
+  }
+  // Fallback simple normalization if applyHamzaFilter is missing
+  return typeof data === 'string' ? data.replace(/[أإآا]/g, 'ا').replace(/[ىي]/g, 'ي') : data;
 }
 
 // --- 1. AUDIO REACTIVITY ---
@@ -52,9 +56,6 @@ async function fetchDailyVerseKey() {
   } catch (e) { return "2:255"; }
 }
 
-/**
- * Fetches and styles the "Lesson Learnt" (الدروس المستفادة)
- */
 async function fetchVerseNote(verseKey) {
   const notePanel = document.getElementById('notePanel');
   const noteContent = document.getElementById('noteContent');
@@ -68,11 +69,11 @@ async function fetchVerseNote(verseKey) {
 
     if (data?.note_text?.trim()) {
       noteContent.innerHTML = `
-        <div class="lesson-container fade-in">
-            <span class="lesson-title">هدايات الآية:</span>
-            <p class="lesson-text">${safeFilter(data.note_text)}</p>
-        </div>
-      `;
+                <div class="lesson-container fade-in">
+                    <span class="lesson-title">هدايات الآية:</span>
+                    <p class="lesson-text">${safeFilter(data.note_text)}</p>
+                </div>
+            `;
       notePanel.classList.remove('hidden');
     } else {
       notePanel.classList.add('hidden');
@@ -86,14 +87,14 @@ async function initSurahData() {
   try {
     const res = await fetch('https://api.quran.com/api/v4/chapters?language=ar');
     const data = await res.json();
-    allSurahs = safeFilter(data.chapters);
+    allSurahs = data.chapters; // Filter applied during render/search
     const otaKey = await fetchDailyVerseKey();
     await setMode('daily', otaKey);
     renderIndex();
   } catch (e) { showToast("خطأ في تحميل البيانات"); }
 }
 
-// --- 3. SEARCH & FULL SURAH NAVIGATION ---
+// --- 3. SEARCH & NAVIGATION ---
 
 function handleSurahKey(event) {
   if (event.key === 'Enter') {
@@ -101,7 +102,7 @@ function handleSurahKey(event) {
     if (!query) return;
     const match = allSurahs.find(s =>
       s.name_arabic.includes(query) ||
-      s.name_simple.toLowerCase().includes(query) ||
+      s.name_simple.toLowerCase().includes(query.toLowerCase()) ||
       s.id.toString() === query
     );
     if (match) {
@@ -123,18 +124,6 @@ function handleAyahKey(event) {
   }
 }
 
-function handleAutofill(event) {
-  const query = event.target.value.trim();
-  if (!query) return;
-  const match = allSurahs.find(s =>
-    s.name_arabic === query ||
-    s.name_simple.toLowerCase() === query
-  );
-  if (match) {
-    selectSurah(match.name_arabic, match.id);
-  }
-}
-
 function filterSurahs() {
   const query = document.getElementById('surahSearch')?.value.trim().toLowerCase();
   const list = document.getElementById('surahList');
@@ -149,10 +138,10 @@ function filterSurahs() {
   ).slice(0, 10);
   if (matches.length > 0) {
     list.innerHTML = matches.map(s => `
-      <div onclick="selectSurah('${s.name_arabic}', ${s.id})" 
-           class="p-3 hover:bg-teal-800/50 cursor-pointer border-b border-teal-900/30 text-right text-sm text-white">
-        ${s.name_arabic} <span class="text-teal-600 text-xs">#${s.id}</span>
-      </div>`).join('');
+            <div onclick="selectSurah('${s.name_arabic}', ${s.id})" 
+                 class="p-3 hover:bg-teal-800/50 cursor-pointer border-b border-teal-900/30 text-right text-sm text-white">
+                ${s.name_arabic} <span class="text-teal-600 text-xs">#${s.id}</span>
+            </div>`).join('');
     list.classList.remove('hidden');
   } else {
     list.classList.add('hidden');
@@ -167,9 +156,7 @@ function selectSurah(name, id) {
   if (hiddenInput) hiddenInput.value = id;
   currentSurahNumber = id;
   document.getElementById('surahList')?.classList.add('hidden');
-  if (ayahInput) {
-    setTimeout(() => ayahInput.focus(), 50);
-  }
+  if (ayahInput) setTimeout(() => ayahInput.focus(), 50);
 }
 
 function searchVerse() {
@@ -182,24 +169,20 @@ function searchVerse() {
   closeIndex();
 }
 
-function goToSurah() {
-  if (currentSurahNumber) {
-    window.location.href = `build/html/surah.html?surah=${currentSurahNumber}`;
-  } else {
-    showToast("⚠️ يرجى اختيار سورة أولاً");
-  }
-}
-
 // --- 4. CORE FETCHING & KHATMA BRIDGE ---
 
 async function syncKhatmaProgress(verseKey) {
   try {
+    const { data: { user } } = await sbClient.auth.getUser();
+    if (!user) return;
+
     const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}`);
     const data = await res.json();
     const verseIndex = data.verse.id;
 
     await sbClient.from('khatma_progress')
       .update({ last_verse_key: verseKey, completed_verses: verseIndex })
+      .eq('user_id', user.id)
       .eq('is_active', true);
   } catch (e) { }
 }
@@ -216,8 +199,7 @@ function fetchVerseByKey(verseKey) {
   fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}?fields=text_uthmani`)
     .then(res => res.json())
     .then(data => {
-      const filteredData = safeFilter(data);
-      const verse = filteredData.verse;
+      const verse = data.verse;
       currentVerseKey = verse.verse_key;
       const [surahNum, verseNum] = currentVerseKey.split(':');
       currentSurahNumber = surahNum;
@@ -279,7 +261,7 @@ function toggleTafsir() {
   fetch(`https://api.quran.com/api/v4/tafsirs/16/by_ayah/${currentVerseKey}`)
     .then(res => res.json())
     .then(data => {
-      content.innerText = safeFilter(data).tafsir.text.replace(/<[^>]*>?/gm, '');
+      content.innerText = safeFilter(data.tafsir.text).replace(/<[^>]*>?/gm, '');
     });
 }
 
@@ -368,16 +350,63 @@ async function copyImageToClipboard() {
   } catch (err) { showToast("❌ فشل النسخ"); }
 }
 
-async function shareTo(platform) {
-  const canvas = document.getElementById('shareCanvas');
-  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-  const file = new File([blob], 'yatlo-verse.png', { type: 'image/png' });
-  if (navigator.share) {
-    navigator.share({ files: [file] }).catch(() => { });
-  } else { showToast("يرجى حفظ الصورة لمشاركتها"); }
+// --- 7. ANALYTICS (FINGERPRINTING) ---
+
+async function generateHardwareFingerprint() {
+  const hardwareInfo = [
+    navigator.hardwareConcurrency,
+    navigator.deviceMemory || "unknown",
+    screen.width + "x" + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    navigator.platform,
+    (function () {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx.sampleRate;
+      } catch (e) { return "no-audio"; }
+    })()
+  ].join('|');
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(hardwareInfo);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
 }
 
-// --- 7. UTILS & INDEX ---
+async function trackVisit() {
+  try {
+    const { data: { user } } = await sbClient.auth.getUser();
+    let visitorId = "";
+
+    if (user) {
+      visitorId = `u_${user.id}`;
+    } else {
+      const fingerprint = await generateHardwareFingerprint();
+      visitorId = `f_${fingerprint}`;
+    }
+
+    console.log("Attempting to track ID:", visitorId);
+
+    // Remove sessionStorage check temporarily for testing
+    const { error } = await sbClient.rpc('increment_visit_count_unique', {
+      visitor_identifier: visitorId
+    });
+
+    if (error) {
+      console.error("Supabase RPC Error:", error.message);
+      console.error("Error Code:", error.code);
+    } else {
+      console.log("✅ Visit processed successfully (Database checked for uniqueness)");
+    }
+
+  } catch (e) {
+    console.error("Critical Tracking Failure:", e);
+  }
+}
+
+// --- 8. UTILS & UI ---
 
 function renderIndex() {
   const grid = document.getElementById('indexGrid');
@@ -385,10 +414,10 @@ function renderIndex() {
   const query = document.getElementById('indexSearch')?.value.toLowerCase() || "";
   const filtered = allSurahs.filter(s => s.name_arabic.includes(query) || s.id.toString() === query);
   grid.innerHTML = filtered.map(s => `
-    <div onclick="selectFromIndex(${s.id})" class="bg-[#162927] border border-teal-900/50 p-3 rounded-xl text-center cursor-pointer hover:border-teal-400">
-      <h3 class="text-base font-bold quran-font text-white">${s.name_arabic}</h3>
-      <p class="text-[9px] text-slate-500 uppercase">${s.name_simple}</p>
-    </div>`).join('');
+        <div onclick="selectFromIndex(${s.id})" class="bg-[#162927] border border-teal-900/50 p-3 rounded-xl text-center cursor-pointer hover:border-teal-400">
+            <h3 class="text-base font-bold quran-font text-white">${s.name_arabic}</h3>
+            <p class="text-[9px] text-slate-500 uppercase">${s.name_simple}</p>
+        </div>`).join('');
 }
 
 function openIndex() {
@@ -407,7 +436,7 @@ function closeIndex() {
 }
 
 function selectFromIndex(surahId) {
-  window.location.href = `build/html/surah.html?surah=${surahId}`;
+  window.location.href = `/build/html/surah.html?surah=${surahId}`;
 }
 
 function showToast(message) {
@@ -419,88 +448,61 @@ function showToast(message) {
   setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
 
+async function checkActiveKhatma() {
+  try {
+    const { data: { user } } = await sbClient.auth.getUser();
+    if (!user) return;
+
+    const { data } = await sbClient
+      .from('khatma_progress')
+      .select('last_verse_key')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (data) {
+      const widget = document.getElementById('resumeWidget');
+      const text = document.getElementById('resumeStatusText');
+      if (widget && text) {
+        widget.classList.remove('hidden');
+        const [sNum] = data.last_verse_key.split(':');
+        const surah = allSurahs.find(s => s.id == sNum);
+        text.innerText = `وصلت إلى سورة ${surah ? surah.name_arabic : ''} (${data.last_verse_key})`;
+      }
+    }
+  } catch (e) { }
+}
+
+// --- INITIALIZATION CALLS ---
+
 window.onload = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const verseParam = urlParams.get('verse');
   if (verseParam) fetchVerseByKey(verseParam);
 };
 
-// --- 8. UI EVENT LISTENERS & ADMIN ACCESS ---
+// --- 10. GLOBAL EXECUTION ---
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Using the ID from your HTML: btn-daily
-  const dailyBtn = document.getElementById('btn-daily');
-  const randomBtn = document.getElementById('btn-random');
+// This runs IMMEDIATELY when the script loads, no waiting.
+console.log("Yatlo Script Loaded - Starting Tracking...");
 
-  // ADMIN REDIRECT LOGIC (4s Hold on btn-daily)
-  let holdTimer;
-  if (dailyBtn) {
-    const startHold = (e) => {
-      // Prevent context menu on mobile long press
-      if (e.type === 'touchstart') {
-        holdTimer = setTimeout(() => {
-          window.location.href = "/build/html/admin.html";
-        }, 4000);
-      } else {
-        holdTimer = setTimeout(() => {
-          window.location.href = "/build/html/admin.html";
-        }, 4000);
-      }
-    };
+async function startApp() {
+  // 1. Run tracking first and independently
+  await trackVisit();
 
-    const endHold = () => {
-      clearTimeout(holdTimer);
-    };
+  // 2. Then load the heavy Quran data
+  initSurahData();
 
-    // Mouse events
-    dailyBtn.addEventListener('mousedown', startHold);
-    dailyBtn.addEventListener('mouseup', endHold);
-    dailyBtn.addEventListener('mouseleave', endHold);
-
-    // Touch events for mobile
-    dailyBtn.addEventListener('touchstart', startHold);
-    dailyBtn.addEventListener('touchend', endHold);
-  }
-
-  if (randomBtn) {
-    randomBtn.onclick = () => setMode('random');
-  }
-
-  const surahSearch = document.getElementById('surahSearch');
-  if (surahSearch) {
-    surahSearch.addEventListener('input', filterSurahs);
-    surahSearch.addEventListener('keydown', handleSurahKey);
-  }
-
-  const ayahInput = document.getElementById('ayahInput');
-  if (ayahInput) {
-    ayahInput.addEventListener('keydown', handleAyahKey);
-  }
-
-  const indexSearch = document.getElementById('indexSearch');
-  if (indexSearch) {
-    indexSearch.addEventListener('input', renderIndex);
-  }
-});
-
-// Ensure you have Supabase initialized in index.html as well
-async function checkActiveKhatma() {
-  const { data, error } = await sb
-    .from('khatma_progress')
-    .select('current_page, journey_name')
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (data) {
-    const widget = document.getElementById('resumeWidget');
-    const text = document.getElementById('resumeStatusText');
-
-    widget.classList.remove('hidden');
-    text.innerText = `وصلت إلى صفحة ${data.current_page}`;
-  }
+  // 3. Then check for khatma
+  setTimeout(checkActiveKhatma, 1500);
 }
 
-// Run on load
-document.addEventListener('DOMContentLoaded', checkActiveKhatma);
+// Use 'load' instead of 'DOMContentLoaded' to ensure everything is ready
+window.addEventListener('load', startApp);
 
-initSurahData();
+// Also bind your buttons here to be safe
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-random')?.addEventListener('click', () => setMode('random'));
+  document.getElementById('btn-daily')?.addEventListener('click', () => setMode('daily'));
+  document.getElementById('surahSearch')?.addEventListener('input', filterSurahs);
+});

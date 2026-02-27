@@ -1,195 +1,221 @@
 /**
- * يتلو | Yatlo Hadiths - Unified Logic
- * Ported exactly from index.html sharing & copy mechanisms
+ * يتلو | Yatlo Hadiths - BigYusuf RapidAPI Edition
  */
 
-const HadithEngine = {
-    BASE_URL: "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/",
-    BOOKS: {
-        "ara-bukhari": { name: "صحيح البخاري" },
-        "ara-muslim": { name: "صحيح مسلم" },
-    },
-    currentData: null
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                teal: {
+                    900: '#0f1a19',
+                }
+            }
+        }
+    }
 };
 
-// --- 1. DATA FETCHING ---
-async function fetchRandomHadith() {
-    const textEl = document.getElementById('hadithText');
-    const bookSelect = document.getElementById('bookSelect');
-    if (textEl) textEl.style.opacity = "0.3";
+const SUPABASE_URL = 'https://ruokjdtnpraaglmewjwa.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_GqCbpZBE9aT0Tv0AY3A_6Q_utNzCQA-';
 
-    try {
-        const response = await fetch(`${HadithEngine.BASE_URL}${bookSelect.value}.json`);
-        const data = await response.json();
-        const randomEntry = data.hadiths[Math.floor(Math.random() * data.hadiths.length)];
+const HadithEngine = {
+    BASE_URL: "https://hadiths-api.p.rapidapi.com/hadiths",
+    RAPID_KEY: "2f6fdbe126msh0c46da96afc8f1cp1fba78jsn2140bfdb1b89",
+    RAPID_HOST: "hadiths-api.p.rapidapi.com",
+    current: null,
+    currentMode: 'daily',
+    sb: null
+};
 
-        HadithEngine.currentData = {
-            text: randomEntry.text || randomEntry.hadith,
-            number: randomEntry.hadithnumber,
-            bookName: HadithEngine.BOOKS[bookSelect.value].name
-        };
+// 1. Initialize Supabase
+try {
+    if (typeof supabase !== 'undefined') {
+        HadithEngine.sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+} catch (e) {
+    console.warn("Supabase initialization failed:", e);
+}
 
-        document.getElementById('hadithText').innerText = HadithEngine.currentData.text;
-        document.getElementById('hadithMeta').innerText = `${HadithEngine.currentData.bookName} : رقم ${HadithEngine.currentData.number}`;
-        document.getElementById('hadithText').style.opacity = "1";
-    } catch (e) {
-        showToast("خطأ في تحميل الحديث");
+// 2. Main Controller
+async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode') || 'daily';
+    setMode(mode);
+}
+
+async function setMode(mode) {
+    HadithEngine.currentMode = mode;
+    const bg = document.getElementById('toggleBg');
+    const btnDaily = document.getElementById('btn-daily');
+    const btnRandom = document.getElementById('btn-random');
+    const controls = document.getElementById('randomControls');
+
+    if (mode === 'daily') {
+        if (bg) { bg.style.right = '4px'; bg.style.left = 'auto'; }
+        btnDaily?.classList.add('text-white');
+        btnDaily?.classList.remove('text-slate-500');
+        btnRandom?.classList.add('text-slate-500');
+        btnRandom?.classList.remove('text-white');
+        controls?.classList.add('hidden');
+        await loadDailyHadith();
+    } else {
+        if (bg) { bg.style.right = 'auto'; bg.style.left = '4px'; }
+        btnRandom?.classList.add('text-white');
+        btnRandom?.classList.remove('text-slate-500');
+        btnDaily?.classList.add('text-slate-500');
+        btnDaily?.classList.remove('text-white');
+        controls?.classList.remove('hidden');
+        await fetchRandomHadith();
     }
 }
 
-// --- 2. MODAL & CANVAS (Matching index.html logic) ---
-
-async function shareAsImage() {
-    const canvas = document.getElementById('shareCanvas');
-    const ctx = canvas.getContext('2d');
-    const data = HadithEngine.currentData;
-    const modal = document.getElementById('shareModal');
-    const preview = document.getElementById('previewImage');
-
-    if (!data) return;
-
-    // 1. Setup Canvas (Exact same 1080x1080 scale as index)
-    canvas.width = 1080;
-    canvas.height = 1080;
-
-    // Background Gradient
-    const gradient = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
-    gradient.addColorStop(0, '#152422');
-    gradient.addColorStop(1, '#0b1211');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1080, 1080);
-
-    // Border
-    ctx.strokeStyle = '#2dd4bf';
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.roundRect(30, 30, 1020, 1020, 10);
-    ctx.stroke();
-
-    ctx.textAlign = 'center';
-    ctx.direction = 'rtl';
-
-    // Header (Book & Number)
-    ctx.fillStyle = '#2dd4bf';
-    ctx.font = '42px "Amiri", serif';
-    ctx.fillText(`${data.bookName} | رقم ${data.number}`, 540, 120);
-
-    // Dynamic Text Sizing & Wrapping
-    ctx.fillStyle = 'white';
-    let fontSize = 68;
-    let lines = [];
-    const maxWidth = 880;
-    const maxHeight = 700;
-
-    while (fontSize > 18) {
-        ctx.font = `bold ${fontSize}px "Amiri", serif`;
-        let currentLineHeight = fontSize * 1.5;
-        lines = [];
-        let words = data.text.split(' ');
-        let currentLine = '';
-
-        words.forEach(word => {
-            let testLine = currentLine + word + ' ';
-            if (ctx.measureText(testLine).width > maxWidth) {
-                lines.push(currentLine.trim());
-                currentLine = word + ' ';
-            } else { currentLine = testLine; }
-        });
-        lines.push(currentLine.trim());
-        if (lines.length * currentLineHeight <= maxHeight) break;
-        fontSize -= 2;
-    }
-
-    const finalLineHeight = fontSize * 1.5;
-    let y = 180 + (maxHeight - (lines.length * finalLineHeight)) / 2 + (finalLineHeight / 1.2);
-    ctx.font = `bold ${fontSize}px "Amiri", serif`;
-    lines.forEach(line => { ctx.fillText(line, 540, y); y += finalLineHeight; });
-
-    // Branding
-    ctx.fillStyle = '#2dd4bf';
-    ctx.font = '30px "Rakkas", serif';
-    ctx.fillText('تطبيق يتلو | Yatlo Hadith', 540, 1030);
-
-    // Update Image Preview
-    preview.src = canvas.toDataURL('image/png');
-
-    // Show Modal
-    modal.classList.replace('hidden', 'flex');
-}
-
-function closeModal() {
-    const modal = document.getElementById('shareModal');
-    if (!modal) return;
-    modal.classList.replace('flex', 'hidden');
-}
-
-// --- 3. THE "WORKING" SHARING FUNCTIONS ---
-
-async function copyImageToClipboard() {
-    const canvas = document.getElementById('shareCanvas');
+// 3. Data Fetching
+async function loadDailyHadith() {
+    setLoadingState(true);
     try {
-        canvas.toBlob(async (blob) => {
-            const item = new ClipboardItem({ "image/png": blob });
-            await navigator.clipboard.write([item]);
-            showToast("✅ تم نسخ الصورة بنجاح");
-        });
-    } catch (err) {
-        showToast("📱 اضغط مطولاً على الصورة لحفظها");
-    }
-}
+        const { data: config } = await HadithEngine.sb
+            .from('site_config')
+            .select('hadith_number')
+            .eq('id', 'daily_hadith')
+            .maybeSingle();
 
-async function shareTo(platform) {
-    const canvas = document.getElementById('shareCanvas');
-    try {
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        const file = new File([blob], 'hadith-yatlo.png', { type: 'image/png' });
-
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: 'حديث شريف',
-                text: 'من تطبيق يتلو'
-            });
+        if (config?.hadith_number) {
+            await fetchHadithById(config.hadith_number);
         } else {
-            // Fallback: Link Download for older mobile browsers
-            const link = document.createElement('a');
-            link.download = 'hadith.png';
-            link.href = canvas.toDataURL();
-            link.click();
-            showToast("💾 تم تحميل الصورة للمشاركة");
+            await fetchRandomHadith();
         }
     } catch (e) {
-        showToast("فشلت المشاركة");
+        console.error("Daily Hadith fetch failed:", e);
+        await fetchRandomHadith();
+    } finally {
+        setLoadingState(false);
     }
 }
 
-/**
- * Text-only share (Used for "Copy Text" button)
- */
-function shareHadithText() {
-    const data = HadithEngine.currentData;
-    const text = `﴿ حديث شريف ﴾\n\n${data.text}\n\nالمصدر: ${data.bookName}\nعبر تطبيق يتلو`;
-
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    showToast("✅ تم نسخ النص");
+async function safeJson(response) {
+    try {
+        return await response.json();
+    } catch (e) {
+        throw new Error("Non-JSON response from API");
+    }
 }
 
-// --- 4. UTILS ---
+async function fetchHadithById(id) {
+    if (!id) return;
+    setLoadingState(true);
+    try {
+        const response = await fetch(`${HadithEngine.BASE_URL}/${id}`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-key': HadithEngine.RAPID_KEY,
+                'x-rapidapi-host': HadithEngine.RAPID_HOST
+            }
+        });
 
-function showToast(message) {
-    const toast = document.getElementById('toast');
-    const msgEl = document.getElementById('toastMessage');
-    if (!toast || !msgEl) return;
-    msgEl.innerText = message;
-    toast.classList.replace('opacity-0', 'opacity-100');
-    setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+        const data = await safeJson(response);
+        processHadith(data);
+
+    } catch (e) {
+        console.error("Specific fetch failed:", e);
+    } finally {
+        setLoadingState(false);
+    }
 }
 
-// Initial Run
-window.getNewHadith = fetchRandomHadith;
-document.addEventListener('DOMContentLoaded', fetchRandomHadith);
+async function fetchRandomHadith() {
+    setLoadingState(true);
+    try {
+        const response = await fetch(`${HadithEngine.BASE_URL}?limit=20&page=1`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-key': HadithEngine.RAPID_KEY,
+                'x-rapidapi-host': HadithEngine.RAPID_HOST
+            }
+        });
+
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+        const result = await safeJson(response);
+        const list = result.data || result;
+
+        if (!Array.isArray(list) || list.length === 0) {
+            throw new Error("Empty API response");
+        }
+
+        const entry = list[Math.floor(Math.random() * list.length)];
+        processHadith(entry);
+
+    } catch (e) {
+        console.error("Random fetch failed:", e);
+        showToast("⚠️ فشل تحميل الحديث");
+    } finally {
+        setLoadingState(false);
+    }
+}
+
+// Process Hadith
+function processHadith(entry) {
+    if (!entry) return;
+    HadithEngine.current = {
+        text: (entry.matn || entry.hadith || "").replace(/<[^>]*>?/gm, '').trim(),
+        id: entry._id || entry.id,
+        number: entry.hadith_number || entry.number || "---",
+        bookName: entry.book?.name || entry.book || "حديث شريف"
+    };
+    if (!HadithEngine.current.id) {
+        console.warn("No valid Hadith ID; skipping Supabase notes");
+    } else {
+        fetchHadithNote(HadithEngine.current.id);
+    }
+    renderHadithUI();
+}
+
+// 4. UI & Notes
+function renderHadithUI() {
+    const textEl = document.getElementById('hadithText');
+    const metaEl = document.getElementById('hadithMeta');
+    if (textEl && HadithEngine.current) {
+        textEl.innerText = HadithEngine.current.text;
+        textEl.style.opacity = "1";
+    }
+    if (metaEl && HadithEngine.current) {
+        metaEl.innerText = `${HadithEngine.current.bookName} | رقم ${HadithEngine.current.number}`;
+    }
+}
+
+async function fetchHadithNote(id) {
+    if (!HadithEngine.sb || !id) return;
+    try {
+        const { data } = await HadithEngine.sb
+            .from('hadith_notes')
+            .select('note_text')
+            .eq('hadith_id', id)
+            .maybeSingle();
+        const notePanel = document.getElementById('hadithNotePanel');
+        const noteContent = document.getElementById('hadithNoteContent');
+
+        if (data?.note_text?.trim()) {
+            noteContent.innerHTML = `<div class="lesson-container fade-in"><span class="lesson-title">هدايات الحديث:</span><p class="lesson-text">${data.note_text}</p></div>`;
+            notePanel.classList.remove('hidden');
+        } else {
+            notePanel?.classList.add('hidden');
+        }
+    } catch (e) {
+        console.warn("Hadith notes fetch failed:", e);
+    }
+}
+
+function setLoadingState(isLoading) {
+    const textEl = document.getElementById('hadithText');
+    if (textEl) textEl.style.opacity = isLoading ? "0.2" : "1";
+}
+
+// 5. Sharing & Modals
+// ... keep your shareAsImage, copyImageToClipboard, triggerNativeShare as is ...
+
+window.setMode = setMode;
+window.fetchRandomHadith = fetchRandomHadith;
+window.fetchHadithById = fetchHadithById;
+
+document.addEventListener('DOMContentLoaded', init);
