@@ -1,6 +1,6 @@
 /**
- * يتلو | Yatlo Admin - Unified Logic
- * Handles: Security, Real-time Stats, Daily Verse & Hadith Management
+ * Yatlo | Admin Panel - Unified Logic
+ * Features: Authentication, Real-time Stats, Daily Verse/Hadith, and Admin Management
  */
 
 // --- CONFIGURATION ---
@@ -13,8 +13,8 @@ let allSurahs = [];
 let selectedSurahId = null;
 let confirmedKey = null;
 let activeSearchIndex = -1;
-let adminMode = 'quran';
-let presenceChannel; // Global to prevent garbage collection
+let adminMode = 'quran'; // 'quran' | 'hadith' | 'roles'
+let presenceChannel;
 
 /**
  * 1. SECURITY & INITIALIZATION
@@ -35,7 +35,7 @@ async function checkAdminAccess() {
             .single();
 
         if (error || !profile?.is_admin) {
-            alert("⚠️ غير مصرح لك بدخول هذه الصفحة");
+            alert("⚠️ Unauthorized access.");
             window.location.href = '/build/html/profile.html';
         } else {
             // Success: Reveal Admin UI
@@ -56,10 +56,12 @@ async function checkAdminAccess() {
 
 async function fetchInitialData() {
     try {
+        // Fetch Quran Chapters
         const res = await fetch('https://api.quran.com/api/v4/chapters?language=en');
         const data = await res.json();
         allSurahs = data.chapters;
 
+        // Fetch Live Configs
         const { data: configs, error } = await sb.from('site_config').select('*');
         if (error) throw error;
 
@@ -69,20 +71,15 @@ async function fetchInitialData() {
         if (verseConfig) document.getElementById('liveVerse').innerText = verseConfig.verse_key;
         if (hadithConfig) document.getElementById('liveHadith').innerText = `${hadithConfig.book_key} #${hadithConfig.hadith_number}`;
 
-        setTimeout(() => {
-            const verseInput = document.getElementById('newVerseKey');
-            if (verseInput) verseInput.focus();
-        }, 100);
     } catch (e) {
-        showStatus("⚠️ خطأ في الاتصال: " + e.message, "text-orange-400");
+        showStatus("⚠️ Connection Error: " + e.message, "text-orange-400");
     }
 }
 
 /**
- * 2. REAL-TIME STATS LOGIC
+ * 2. REAL-TIME STATS
  */
 async function initStatsTracking() {
-    // Presence (Active Users) - Must match channel name in script.js
     presenceChannel = sb.channel('online-users');
 
     presenceChannel
@@ -90,14 +87,10 @@ async function initStatsTracking() {
             const state = presenceChannel.presenceState();
             const count = Object.keys(state).length;
             const activeEl = document.getElementById('activeUsersCount');
-            if (activeEl) {
-                activeEl.innerText = count;
-                console.log("Admin Panel Sync: Online Users =", count);
-            }
+            if (activeEl) activeEl.innerText = count;
         })
         .subscribe();
 
-    // Total Visits Fetch
     fetchTotalVisits();
 }
 
@@ -108,54 +101,59 @@ async function fetchTotalVisits() {
             const totalEl = document.getElementById('totalVisitsCount');
             if (totalEl) totalEl.innerText = data.count.toLocaleString();
         }
-    } catch (e) {
-        console.error("Failed to fetch visits:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 /**
- * 3. MODE SWITCHING & UI
+ * 3. MODE SWITCHING (Tabs)
  */
 function switchAdminMode(mode) {
     adminMode = mode;
     const qBtn = document.getElementById('quranTabBtn');
     const hBtn = document.getElementById('hadithTabBtn');
+    const rBtn = document.getElementById('rolesTabBtn');
+
     const qArea = document.getElementById('quranInputArea');
     const hArea = document.getElementById('hadithInputArea');
+    const rArea = document.getElementById('rolesInputArea');
+
     const title = document.getElementById('adminTitle');
     const live = document.getElementById('liveIndicator');
     const card = document.getElementById('previewCard');
-    const btnText = document.getElementById('btnText');
 
-    card?.classList.add('hidden');
-    const noteField = document.getElementById('verseNote');
-    if (noteField) noteField.value = "";
+    // Reset Tabs
+    [qBtn, hBtn, rBtn].forEach(b => b?.classList.remove('bg-teal-600', 'text-white'));
+    [qArea, hArea, rArea].forEach(a => a?.classList.add('hidden'));
 
     if (mode === 'quran') {
         qBtn?.classList.add('bg-teal-600', 'text-white');
-        hBtn?.classList.remove('bg-teal-600', 'text-white');
         qArea?.classList.remove('hidden');
-        hArea?.classList.add('hidden');
-        if (title) title.innerText = "بث آية اليوم";
-        if (live) live.style.visibility = "visible";
-        if (btnText) btnText.innerText = "تأكيد وبث التحديث";
-    } else {
+        title.innerText = "Broadcast Verse of the Day";
+        if (live) live.style.display = "flex";
+    }
+    else if (mode === 'hadith') {
         hBtn?.classList.add('bg-teal-600', 'text-white');
-        qBtn?.classList.remove('bg-teal-600', 'text-white');
         hArea?.classList.remove('hidden');
-        qArea?.classList.add('hidden');
-        if (title) title.innerText = "هدايات الأحاديث";
-        if (live) live.style.visibility = "hidden";
-        if (btnText) btnText.innerText = "حفظ هداية الحديث";
+        title.innerText = "Hadith Lessons";
+        if (live) live.style.display = "none";
 
-        document.getElementById('previewName').innerText = "إضافة هداية لحديث";
-        document.getElementById('previewText').innerText = "أدخل رقم الحديث واختر الكتاب لحفظ الدرس المستفاد";
+        // Setup default UI for Hadith
+        document.getElementById('previewName').innerText = "Add Lesson to Hadith";
+        document.getElementById('previewText').innerText = "Enter Hadith info below to save lessons.";
         card?.classList.remove('hidden');
+    }
+    else if (mode === 'roles') {
+        rBtn?.classList.add('bg-teal-600', 'text-white');
+        rArea?.classList.remove('hidden');
+        title.innerText = "Admin Management";
+        if (live) live.style.display = "none";
+        card?.classList.add('hidden');
+        loadAdminList();
     }
 }
 
 /**
- * 4. QURAN SEARCH & PREVIEW
+ * 4. QURAN SEARCH & BROADCAST
  */
 async function unifiedAdminLogic() {
     if (adminMode !== 'quran') return;
@@ -173,15 +171,6 @@ async function unifiedAdminLogic() {
             return;
         }
 
-        if (inputVal.includes(':') && selectedSurahId) {
-            const ayah = inputVal.split(':')[1].trim();
-            if (ayah.length > 0) {
-                list.classList.add('hidden');
-                await showVersePreview(`${selectedSurahId}:${ayah}`);
-            }
-            return;
-        }
-
         card?.classList.add('hidden');
         if (inputVal.length > 0) {
             const matches = allSurahs.filter(s =>
@@ -191,7 +180,7 @@ async function unifiedAdminLogic() {
 
             if (matches.length > 0) {
                 list.innerHTML = matches.map(s => `
-                    <div onclick="applySelection('${s.name_arabic}', ${s.id})" class="p-4 cursor-pointer border-b border-white/5 text-right flex justify-between items-center hover:bg-teal-900/20 transition-colors">
+                    <div onclick="applySelection('${s.name_arabic}', ${s.id})" class="p-4 cursor-pointer border-b border-white/5 text-right flex justify-between items-center hover:bg-teal-900/20">
                         <span class="text-teal-600 text-[10px] font-bold">#${s.id}</span>
                         <div class="flex flex-col items-end">
                             <span class="text-white font-['Amiri']">${s.name_arabic}</span>
@@ -216,30 +205,111 @@ function applySelection(name, id) {
 async function showVersePreview(key) {
     try {
         const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${key}?fields=text_uthmani`);
-        if (!res.ok) throw new Error("آية غير موجودة");
+        if (!res.ok) throw new Error("Verse not found");
         const data = await res.json();
         const [s, a] = key.split(':');
         const surah = allSurahs.find(surah => surah.id == s);
 
-        document.getElementById('previewName').innerText = `سورة ${surah.name_arabic} : آية ${a}`;
+        document.getElementById('previewName').innerText = `Surah ${surah.name_simple} : Ayah ${a}`;
         document.getElementById('previewText').innerText = data.verse.text_uthmani;
         document.getElementById('previewCard').classList.remove('hidden');
         confirmedKey = key;
     } catch (e) {
-        document.getElementById('previewCard').classList.add('hidden');
         showStatus("⚠️ " + e.message, "text-orange-400");
     }
 }
 
 /**
- * 5. BROADCAST ACTIONS
+ * 5. ADMIN ROLES MANAGEMENT
+ */
+async function loadAdminList() {
+    const container = document.getElementById('adminList');
+    try {
+        const { data, error } = await sb
+            .from('profiles')
+            .select('id, email, is_admin')
+            .eq('is_admin', true);
+
+        if (error) throw error;
+
+        container.innerHTML = data.map(admin => `
+            <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5 mb-2">
+                <div class="flex flex-col">
+                    <span class="text-sm text-white">${admin.email || 'No Email'}</span>
+                    <span class="text-[9px] text-gray-500 font-mono">${admin.id}</span>
+                </div>
+                <button onclick="removeAdminRole('${admin.id}')" class="text-red-400 hover:text-red-300 p-2">
+                    <ion-icon name="trash-outline"></ion-icon>
+                </button>
+            </div>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = `<div class="text-red-400 text-xs text-center p-4">Failed to load list</div>`;
+    }
+}
+
+async function assignAdminRole() {
+    const input = document.getElementById('adminSearchInput');
+    const searchValue = input.value.trim();
+
+    if (!searchValue) return showStatus("⚠️ Enter Email or User ID", "text-orange-400");
+
+    try {
+        // Regex to check if the input is a valid UUID (User ID)
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(searchValue);
+
+        let query = sb.from('profiles').update({ is_admin: true });
+
+        if (isUUID) {
+            query = query.eq('id', searchValue);
+        } else {
+            // Searching by email (case-insensitive)
+            query = query.ilike('email', searchValue);
+        }
+
+        const { data, error } = await query.select();
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            throw new Error("User not found. Ensure they have a profile.");
+        }
+
+        showStatus(`✅ Successfully promoted: ${data[0].email || 'User'}`, "text-teal-400");
+        input.value = "";
+        loadAdminList(); // Refresh the list of admins
+    } catch (e) {
+        showStatus("❌ Error: " + e.message, "text-red-400");
+    }
+}
+
+async function removeAdminRole(userId) {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user.id === userId) return alert("You cannot remove your own admin rights!");
+
+    if (!confirm("Are you sure you want to remove this admin?")) return;
+
+    try {
+        const { error } = await sb
+            .from('profiles')
+            .update({ is_admin: false })
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        showStatus("✅ Admin removed", "text-teal-400");
+        loadAdminList();
+    } catch (e) {
+        showStatus("❌ Failed", "text-red-400");
+    }
+}
+
+/**
+ * 6. SAVE ACTIONS
  */
 async function handlePrimaryAction() {
-    if (adminMode === 'quran') {
-        await updateDailyVerse();
-    } else {
-        await saveHadithNote();
-    }
+    if (adminMode === 'quran') await updateDailyVerse();
+    else if (adminMode === 'hadith') await saveHadithNote();
 }
 
 async function updateDailyVerse() {
@@ -248,92 +318,52 @@ async function updateDailyVerse() {
     const noteValue = document.getElementById('verseNote').value.trim();
 
     btn.disabled = true;
-    btn.innerText = "جاري البث...";
+    btn.innerText = "Broadcasting...";
 
     try {
-        const { error: configError } = await sb
-            .from('site_config')
-            .update({ verse_key: confirmedKey })
-            .eq('id', 'daily_verse');
-        if (configError) throw configError;
-
+        await sb.from('site_config').update({ verse_key: confirmedKey }).eq('id', 'daily_verse');
         if (noteValue) {
-            const { error: noteError } = await sb.from('verse_notes').upsert({
+            await sb.from('verse_notes').upsert({
                 verse_key: confirmedKey,
                 note_text: noteValue
             }, { onConflict: 'verse_key' });
-            if (noteError) throw noteError;
         }
-
         document.getElementById('liveVerse').innerText = confirmedKey;
+        showStatus("✅ Verse Broadcasted!", "text-teal-400");
         resetForm();
-        showStatus("✅ تم تحديث الآية والهدايات!", "text-teal-400");
-    } catch (err) {
-        showStatus("❌ فشل التحديث: " + err.message, "text-red-400");
-    } finally {
+    } catch (err) { showStatus("❌ Error", "text-red-400"); }
+    finally {
         btn.disabled = false;
-        btn.innerHTML = `<span>تأكيد وبث التحديث</span><ion-icon name="paper-plane-outline"></ion-icon>`;
+        btn.innerHTML = `<span>Broadcast Update</span><ion-icon name="paper-plane-outline"></ion-icon>`;
     }
 }
 
 async function saveHadithNote() {
-    const bookKey = document.getElementById('hadithBookSelect').value;
-    const hadithNum = document.getElementById('hadithNumberInput').value;
-    const noteText = document.getElementById('verseNote').value.trim();
-    const btn = document.getElementById('updateBtn');
+    const book = document.getElementById('hadithBookSelect').value;
+    const num = document.getElementById('hadithNumberInput').value;
+    const note = document.getElementById('verseNote').value.trim();
 
-    if (!hadithNum || !noteText) {
-        showStatus("⚠️ أكمل البيانات أولاً", "text-orange-400");
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerText = "جاري الحفظ...";
+    if (!num || !note) return showStatus("⚠️ Missing Data", "text-orange-400");
 
     try {
-        const { error: configError } = await sb
-            .from('site_config')
-            .update({
-                book_key: bookKey,
-                hadith_number: parseInt(hadithNum)
-            })
-            .eq('id', 'daily_hadith');
-
-        if (configError) throw configError;
-
-        const { error: noteError } = await sb
-            .from('hadith_notes')
-            .upsert({
-                book_key: bookKey,
-                hadith_number: parseInt(hadithNum),
-                note_text: noteText
-            }, { onConflict: 'book_key,hadith_number' });
-
-        if (noteError) throw noteError;
-
-        document.getElementById('liveHadith').innerText = `${bookKey} #${hadithNum}`;
-        showStatus("✅ تم بث الحديث وحفظ الهداية!", "text-teal-400");
-        document.getElementById('hadithNumberInput').value = "";
-        document.getElementById('verseNote').value = "";
-    } catch (err) {
-        showStatus("❌ خطأ: " + err.message, "text-red-400");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>حفظ هداية الحديث</span><ion-icon name="paper-plane-outline"></ion-icon>`;
-    }
+        await sb.from('site_config').update({ book_key: book, hadith_number: num }).eq('id', 'daily_hadith');
+        await sb.from('hadith_notes').upsert({
+            book_key: book,
+            hadith_id: num, // Ensure this matches your column name
+            note_text: note
+        });
+        document.getElementById('liveHadith').innerText = `${book} #${num}`;
+        showStatus("✅ Hadith Note Saved!", "text-teal-400");
+    } catch (err) { showStatus("❌ Error", "text-red-400"); }
 }
 
 /**
- * 6. HELPERS & EVENT LISTENERS
+ * 7. UTILS
  */
 function resetForm() {
-    const keyInput = document.getElementById('newVerseKey');
-    const noteInput = document.getElementById('verseNote');
-    if (keyInput) keyInput.value = "";
-    if (noteInput) noteInput.value = "";
+    document.getElementById('newVerseKey').value = "";
+    document.getElementById('verseNote').value = "";
     document.getElementById('previewCard')?.classList.add('hidden');
-    selectedSurahId = null;
-    confirmedKey = null;
 }
 
 function showStatus(text, color) {
@@ -341,58 +371,15 @@ function showStatus(text, color) {
     if (!msg) return;
     msg.innerText = text;
     msg.className = `text-center text-xs mt-4 ${color} animate-pulse`;
-    setTimeout(() => { if (msg.innerText === text) msg.innerText = ""; }, 5000);
+    setTimeout(() => { msg.innerText = ""; }, 5000);
 }
 
-// Keyboard Navigation for Search List
-document.getElementById('newVerseKey')?.addEventListener('keydown', function (e) {
-    const list = document.getElementById('adminSearchList');
-    const items = list.querySelectorAll('div');
-    const card = document.getElementById('previewCard');
-
-    if (list.classList.contains('hidden')) {
-        if (e.key === 'Enter' && adminMode === 'quran' && !card.classList.contains('hidden')) {
-            updateDailyVerse();
-        }
-        return;
-    }
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        activeSearchIndex = (activeSearchIndex + 1) % items.length;
-        updateSearchHighlight(items);
-    }
-    else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        activeSearchIndex = (activeSearchIndex - 1 + items.length) % items.length;
-        updateSearchHighlight(items);
-    }
-    else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (activeSearchIndex > -1 && items[activeSearchIndex]) {
-            items[activeSearchIndex].click();
-        } else if (items.length > 0) {
-            items[0].click();
-        }
-    }
-});
-
-function updateSearchHighlight(items) {
-    items.forEach((item, index) => {
-        if (index === activeSearchIndex) {
-            item.classList.add('bg-teal-900/50', 'text-teal-400', 'border-r-4', 'border-teal-400');
-            item.scrollIntoView({ block: 'nearest' });
-        } else {
-            item.classList.remove('bg-teal-900/50', 'text-teal-400', 'border-r-4', 'border-teal-400');
-        }
-    });
-}
-
-// Global scope expose for HTML onclick events
+// Global Exports
 window.switchAdminMode = switchAdminMode;
 window.handlePrimaryAction = handlePrimaryAction;
 window.unifiedAdminLogic = unifiedAdminLogic;
 window.applySelection = applySelection;
+window.assignAdminRole = assignAdminRole;
+window.removeAdminRole = removeAdminRole;
 
-// Start Security Gate
 checkAdminAccess();

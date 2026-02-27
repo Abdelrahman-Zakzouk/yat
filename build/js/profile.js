@@ -45,19 +45,30 @@ const ProfileManager = {
 
     renderUserHeader(pfpUrl) {
         const emailEl = document.getElementById('profileEmail');
+        const idEl = document.getElementById('profileId'); // New
         const pfpImg = document.getElementById('userPfp');
         const defIcon = document.getElementById('defaultIcon');
 
         if (emailEl) emailEl.innerText = this.user.email;
+        if (idEl) idEl.innerText = `ID: ${this.user.id}`; // Set the ID here
 
         if (pfpUrl && pfpImg) {
-            // Add timestamp to prevent browser from showing old cached image
             pfpImg.src = `${pfpUrl}?t=${new Date().getTime()}`;
             pfpImg.classList.remove('hidden');
             if (defIcon) defIcon.classList.add('hidden');
         } else if (defIcon) {
             pfpImg.classList.add('hidden');
             defIcon.classList.remove('hidden');
+        }
+    },
+    // Add this inside the ProfileManager object
+    async copyId() {
+        if (!this.user) return;
+        try {
+            await navigator.clipboard.writeText(this.user.id);
+            showToast("✅ تم نسخ المعرف (ID)");
+        } catch (err) {
+            showToast("❌ فشل النسخ");
         }
     },
 
