@@ -349,7 +349,7 @@ async function updateDailyVerse() {
     const note = document.getElementById('contentNote').value.trim();
     try {
         const client = await ensureSb();
-        await client.from('site_config').update({ verse_key: confirmedKey }).eq('id', 'daily_verse');
+        await client.from('site_config').upsert({ verse_key: confirmedKey }).eq('id', 'daily_verse');
         if (note) {
             await client.from('verse_notes').upsert({
                 verse_key: confirmedKey,
@@ -374,7 +374,7 @@ async function saveHadithNote() {
         // 1. Update live broadcast config (site_config)
         const { error: configError } = await client
             .from('site_config')
-            .update({
+            .upsert({
                 book_key: book,
                 hadith_number: num
             })

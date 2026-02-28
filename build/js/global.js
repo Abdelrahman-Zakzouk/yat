@@ -80,106 +80,57 @@ const YatloGlobal = {
      * Initialize global services
      */
     async init() {
-        // Wait for the Supabase client to be ready before starting services
         try {
             await window.getSupabaseClient();
-            this.sb = window.sb || window.supabaseClient || window.sbClient || null;
-            // ensure HadithEngine alias is set
-            window.HadithEngine = window.HadithEngine || {};
-            if (!window.HadithEngine.sb) window.HadithEngine.sb = this.sb;
+            this.sb = window.sb;
 
-            // If the Khatma engine exists (it loads earlier), re-run its init now that the
-            // Supabase client is guaranteed available. 
-            if (window.engine && typeof window.engine.init === 'function') {
-                // small delay ensures any other DOMContentLoaded handlers run first
-                setTimeout(() => window.engine.init(), 0);
-            }
+            // ... your other init logic (trackVisit, etc) ...
 
-            // 1. Run hardware-based unique visit tracking
-            this.trackVisit();
-
-            // 2. Initialize real-time presence tracking
-            this.initPresence();
-
-            // 3. Check for active Khatma progress
-            checkActiveKhatma();
-
-            // 4. Listen for auth state changes to refresh Khatma UI when users sign in/out
-            try {
-                if (this.sb && this.sb.auth && typeof this.sb.auth.onAuthStateChange === 'function') {
-                    // track IDs to decide when to wipe the cache
-                    let lastUserId = null;
-                    let prevLoggedInId = null;
-                    (async () => {
-                        try {
-                            const { data: { user } } = await this.sb.auth.getUser();
-                            lastUserId = user?.id || null;
-                            if (lastUserId) prevLoggedInId = lastUserId;
-                        } catch (_) { /* ignore */ }
-                    })();
-
-                    this.sb.auth.onAuthStateChange((event, session) => {
-                        console.log('Auth state change:', event);
-                        const uid = session?.user?.id || null;
-
-                        // Only clear cache when the user actually switches accounts.
-                        if (uid && prevLoggedInId && uid !== prevLoggedInId) {
-                            localStorage.removeItem('yatlo_khatma_cache');
-                            localStorage.removeItem('yatlo_free_page');
-                        }
-
-                        if (uid) prevLoggedInId = uid;
-                        lastUserId = uid;
-
-                        // Refresh server-side resume widget regardless
-                        if (typeof checkActiveKhatma === 'function') checkActiveKhatma();
-
-                        // On sign-in, proactively sync the local cache with server.
-                        if (event === 'SIGNED_IN') {
-                            syncKhatmaCacheWithServer();
-                        }
-
-                        // Re-initialize the engine so it reloads local progress and updates UI
-                        if (window.engine && typeof window.engine.init === 'function') {
-                            setTimeout(() => window.engine.init(), 250);
-                        }
-                    });
-                }
-            } catch (e) {
-                console.warn('Auth listener setup failed', e);
-            }
-
-            console.log("🌙 Yatlo Global Services: Online");
-        } catch (e) {
-            console.warn('Supabase client not ready; continuing without DB features.', e);
-            try { checkActiveKhatma(); } catch (_) { }
-            console.log("🌙 Yatlo Global Services: Partial online (no DB)");
-        }
+            this.initPresence(); // Start the live tracker
+            console.log("🌙 Yatlo Global: Online");
+        } catch (e) { console.error("Init Error:", e); }
     },
 
-    /**
-     * REAL-TIME PRESENCE (Active Users)
-     */
     async initPresence() {
         try {
             const { data: { user } } = await this.sb.auth.getUser();
-            const visitorId = user ? `u_${user.id}` : `g_${Math.random().toString(36).substring(2, 9)}`;
+            // Unique ID per session/tab to ensure accurate live counting
+            const visitorId = user ? `u_${user.id}_${Math.random().toString(36).substring(2, 5)}` : `g_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
 
             this.presenceChannel = this.sb.channel('online-users', {
                 config: { presence: { key: visitorId } }
+            });
+
+            // Sync event fires whenever someone joins or leaves
+            this.presenceChannel.on('presence', { event: 'sync' }, () => {
+                const newState = this.presenceChannel.presenceState();
+                this.onlineCount = Object.keys(newState).length;
+                this.updateLiveUI();
             });
 
             this.presenceChannel.subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
                     await this.presenceChannel.track({
                         online_at: new Date().toISOString(),
-                        page: window.location.pathname,
-                        platform: navigator.platform
+                        page: window.location.pathname
                     });
                 }
             });
-        } catch (e) {
-            console.error("Presence Error:", e);
+        } catch (e) { console.error("Presence Error:", e); }
+    },
+
+    updateLiveUI() {
+        // Updates all elements with class 'live-users-count'
+        const countElements = document.querySelectorAll('.live-users-count');
+        countElements.forEach(el => {
+            el.innerText = this.onlineCount;
+        });
+
+        // Optional: toggle a pulse animation on a status dot
+        const dot = document.getElementById('live-status-dot');
+        if (dot) {
+            dot.classList.add('animate-pulse');
+            setTimeout(() => dot.classList.remove('animate-pulse'), 500);
         }
     },
 
