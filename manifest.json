@@ -1,6 +1,6 @@
 {
-    "name": "يتلو | الأحاديث والقرآن",
-    "short_name": "يتلو",
+    "name": "بياني | الأحاديث والقرآن",
+    "short_name": "بياني",
     "description": "تطبيق إسلامي للأحاديث الشريفة والقرآن الكريم",
     "start_url": "/index.html",
     "display": "standalone",
