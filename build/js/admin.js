@@ -385,9 +385,9 @@ async function saveHadithNote() {
                 .from('hadith_notes')
                 .upsert({
                     book_key: book,
-                    hadith_id: num.toString(), // Ensure consistent typing
+                    hadith_number: num.toString(), // Ensure consistent typing
                     note_text: note
-                }, { onConflict: 'book_key,hadith_id' });
+                }, { onConflict: 'book_key,hadith_number' });
             if (noteError) throw noteError;
         }
 
