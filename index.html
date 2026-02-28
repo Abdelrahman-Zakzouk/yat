@@ -2,6 +2,8 @@
 <html lang="ar" dir="rtl" class="scroll-smooth">
 
 <head>
+  <link rel="manifest" href="/manifest.json">
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>يتلو | Yatlo Quran</title>
@@ -11,6 +13,18 @@
     rel="stylesheet" />
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <link rel="stylesheet" href="/build/css/style.css">
+  <meta name="theme-color" content="#14b8a6">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="يتلو">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png"
+    media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png"
+    media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
   <style>
     /* Prevent layout shifting and ensure smooth scrolling */
     .custom-scrollbar::-webkit-scrollbar {
@@ -316,6 +330,28 @@
   <div id="toast"
     class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-[200] flex items-center gap-2 text-sm">
     <ion-icon name="checkmark-circle"></ion-icon><span id="toastMessage"></span>
+  </div>
+
+  <div id="pwa-banner" class="fixed bottom-6 left-6 right-6 z-[300] hidden">
+    <div
+      class="bg-gradient-to-r from-teal-900 to-emerald-900 border border-teal-500/30 p-5 rounded-3xl shadow-2xl flex items-center justify-between backdrop-blur-xl">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-teal-500/20 rounded-2xl flex items-center justify-center border border-teal-500/30">
+          <ion-icon name="download-outline" class="text-2xl text-teal-400"></ion-icon>
+        </div>
+        <div>
+          <h4 class="text-white font-bold text-sm">ثبت تطبيق يتلو</h4>
+          <p class="text-teal-400/70 text-[10px] uppercase tracking-wider">تصفح سريع وبدون إنترنت</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="dismissPWA()"
+          class="px-4 py-2 text-slate-400 text-xs font-bold hover:text-white transition-colors">لاحقاً</button>
+        <button onclick="installPWA()"
+          class="bg-teal-500 hover:bg-teal-400 text-[#0f1a19] px-6 py-2.5 rounded-xl text-xs font-black shadow-lg active:scale-95 transition-all">تثبيت
+          الآن</button>
+      </div>
+    </div>
   </div>
 
   <canvas id="shareCanvas" class="hidden"></canvas>

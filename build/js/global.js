@@ -305,6 +305,66 @@ async function checkActiveKhatma() {
     } catch (e) { console.error("Khatma Widget Error:", e); }
 }
 
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Yatlo PWA Active'))
+            .catch(err => console.log('PWA Setup Failed', err));
+    });
+}
+
+// Custom Install Prompt logic
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // You can now show a "Download App" button in your UI
+    console.log("App is ready to be installed");
+});
+
+const pwaBanner = document.getElementById('pwa-banner');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+
+    // Check if the user has dismissed it recently
+    if (!localStorage.getItem('pwa-dismissed')) {
+        pwaBanner.classList.remove('hidden');
+        pwaBanner.classList.add('flex', 'animate-bounce-subtle');
+    }
+});
+
+async function installPWA() {
+    if (!deferredPrompt) return;
+
+    // Show the install prompt
+    deferredPrompt.prompt();
+
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+
+    // We've used the prompt, and can't use it again
+    deferredPrompt = null;
+    pwaBanner.classList.add('hidden');
+}
+
+function dismissPWA() {
+    pwaBanner.classList.add('hidden');
+    // Don't show it again for 7 days
+    localStorage.setItem('pwa-dismissed', Date.now());
+}
+
+// Check if app is already launched in standalone mode
+if (window.matchMedia('(display-mode: standalone)').matches) {
+    pwaBanner?.classList.add('hidden');
+}
+
+
 // AUTO-BOOTSTRAP
 document.addEventListener('DOMContentLoaded', () => {
     YatloGlobal.init();

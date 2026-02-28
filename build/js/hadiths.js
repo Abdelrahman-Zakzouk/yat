@@ -6,8 +6,6 @@ const HadithApp = {
     BOOKS: {
         "ara-bukhari": "صحيح البخاري",
         "ara-muslim": "صحيح مسلم",
-        "ara-nasai": "سنن النسائي",
-        "ara-abudawud": "سنن أبي داود"
     },
     current: null,
     mode: 'daily',
@@ -40,69 +38,65 @@ async function fetchHadith(specificBook = null, specificNum = null) {
     const textEl = document.getElementById('hadithText');
     const metaEl = document.getElementById('hadithMeta');
     const bookSelect = document.getElementById('bookSelect');
-    const noteContainer = document.getElementById('noteContainer');
-    const adminNoteEl = document.getElementById('adminNote');
 
     if (!textEl || !metaEl) return;
 
     // Transition UI Out
     textEl.classList.remove('opacity-100', 'translate-y-0');
     textEl.classList.add('opacity-0', 'translate-y-4');
-    if (noteContainer) noteContainer.classList.add('hidden');
 
     try {
         let bookId = specificBook || bookSelect?.value || "ara-bukhari";
         let hadithNum = specificNum;
 
-        // --- STEP 1: Identify Hadith based on Mode ---
-        if (HadithApp.mode === 'daily' && !specificNum) {
+        // Daily Mode Logic
+        if (HadithApp.mode === 'daily' && !specificNum && !specificBook) {
             const config = await fetchDailyHadithSettings();
-            bookId = config.book_key;
-            hadithNum = config.hadith_number;
-            if (bookSelect) bookSelect.value = bookId; // Sync dropdown UI
+            if (config?.book_key) {
+                bookId = config.book_key;
+                hadithNum = config.hadith_number;
+                if (bookSelect) bookSelect.value = bookId;
+            }
         }
 
-        // --- STEP 2: Fetch Text from CDN API ---
-        const res = await fetch(`${HadithApp.API}${bookId}.json`);
+        // Fetching with .min.json for Muslim
+        const isMuslim = bookId === "ara-muslim";
+        const res = await fetch(`${HadithApp.API}${bookId}${isMuslim ? '.min' : ''}.json`);
         const data = await res.json();
+
+        // --- CRITICAL FIX: DATA VALIDATION ---
+        if (!data.hadiths || data.hadiths.length === 0) {
+            throw new Error("No hadiths found in data");
+        }
 
         let entry;
         if (hadithNum) {
-            // Daily or Specific lookup
-            entry = data.hadiths.find(h => String(h.hadithnumber) === String(hadithNum)) || data.hadiths[0];
+            // Find specific hadith, fallback to first one if not found
+            entry = data.hadiths.find(h => String(h.hadithnumber) == String(hadithNum));
+            if (!entry) entry = data.hadiths[0];
         } else {
-            // Random Mode
+            // Random selection
             const index = Math.floor(Math.random() * data.hadiths.length);
             entry = data.hadiths[index];
         }
 
+        // --- CRITICAL FIX: KEY MAPPING ---
+        // Some editions use .text, others use .hadith
+        const finalContent = entry.text || entry.hadith || "لم يتم العثور على نص الحديث";
+
         HadithApp.current = {
-            text: entry.text || entry.hadith,
+            text: finalContent,
             number: entry.hadithnumber,
-            book: HadithApp.BOOKS[bookId],
+            book: HadithApp.BOOKS[bookId] || "كتاب غير معروف",
             book_key: bookId
         };
 
-        // --- STEP 3: Fetch Admin Lesson/Note from Supabase ---
-        const client = window.sbClient || window.sb || window.supabaseClient;
-        if (client && noteContainer && adminNoteEl) {
-            const { data: noteData } = await client
-                .from('hadith_notes')
-                .select('note_text')
-                .eq('book_key', bookId)
-                .eq('hadith_number', HadithApp.current.number)
-                .maybeSingle();
-
-            if (noteData?.note_text) {
-                adminNoteEl.innerText = noteData.note_text;
-                noteContainer.classList.remove('hidden');
-            }
-        }
-
-        // --- STEP 4: Transition UI In ---
+        // Update UI inside the transition timer
         setTimeout(() => {
             textEl.innerText = HadithApp.current.text;
             metaEl.innerText = `${HadithApp.current.book} • رقم ${HadithApp.current.number}`;
+
+            textEl.style.lineHeight = "2.8";
             textEl.classList.remove('opacity-0', 'translate-y-4');
             textEl.classList.add('opacity-100', 'translate-y-0');
             updateFavoriteUI();
@@ -110,13 +104,11 @@ async function fetchHadith(specificBook = null, specificNum = null) {
 
     } catch (err) {
         console.error("Fetch Error:", err);
-        showToast("❌ فشل تحميل البيانات");
+        textEl.innerText = "⚠️ تعذر تحميل الحديث. حاول مرة أخرى.";
+        textEl.classList.remove('opacity-0');
     }
 }
 
-/**
- * APP FLOW & MODES
- */
 async function setAppMode(mode) {
     HadithApp.mode = mode;
     const bg = document.getElementById('toggleBg');
@@ -140,6 +132,11 @@ async function setAppMode(mode) {
         fetchHadith(); // Random
     }
 }
+
+/**
+ * APP FLOW & MODES
+ */
+
 
 /**
  * FAVORITES (DATABASE) LOGIC
