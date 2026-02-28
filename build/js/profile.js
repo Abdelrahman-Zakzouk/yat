@@ -1,5 +1,5 @@
 /**
- * يتلو | Yatlo Profile Logic 
+ * بيان | Bayan Profile Logic 
  */
 
 const ProfileManager = {

@@ -1,5 +1,5 @@
 /**
- * يتلو | Yatlo Quran - Unified Logic
+ * بيان | Bayan Quran - Unified Logic
  * Features: UI Logic, Audio, Search, Tafsir, and Mobile-Optimized Native Sharing.
  */
 
@@ -303,7 +303,7 @@ async function shareAsImage() {
   lines.forEach(l => { ctx.fillText(l, 540, y); y += fontSize * 1.6; });
 
   ctx.fillStyle = '#2dd4bf'; ctx.font = '30px "Rakkas", serif';
-  ctx.fillText('تطبيق يتلو | Yatlo Quran', 540, 1030);
+  ctx.fillText('تطبيق بيان | Bayan Quran', 540, 1030);
 
   preview.src = canvas.toDataURL('image/png', 0.8);
   canvas.toBlob(blob => {
@@ -320,7 +320,7 @@ async function nativeShare() {
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [cachedFile] })) {
       await navigator.share({
         files: [cachedFile],
-        title: 'آية من تطبيق يتلو',
+        title: 'آية من تطبيق بيان',
         text: 'تدبر قوله تعالى'
       });
     } else {

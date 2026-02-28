@@ -1,5 +1,5 @@
 /**
- * Yatlo Duas Engine - Final Fixed RTL Version
+ * Bayan Duas Engine - Final Fixed RTL Version
  */
 
 const DuaEngine = {

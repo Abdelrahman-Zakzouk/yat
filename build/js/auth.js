@@ -1,5 +1,5 @@
 /**
- * يتلو | Yatlo Authentication Logic
+ * بيان | Bayan Authentication Logic
  * Supports: Email/Password, Google OAuth, and Password Reset
  */
 
