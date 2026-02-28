@@ -1,8 +1,10 @@
 /**
  * Yatlo - Khatma Engine & Reader
  * Consolidated Version: Corrected RTL Swiping, Multi-Khatma, Streak Protection, 
- * Bookmark Fix, and Mobile-Optimized Gestures.
+ * Bookmark Fix, Juz' Logic, and Transcribed Surah Names.
  */
+
+
 
 class YatloKhatma {
     constructor() {
@@ -11,28 +13,112 @@ class YatloKhatma {
             freePage: 1,
             streak: 0,
             lastStreakDate: null,
-            freezes: 0
+            freezes: 0,
+            lang: localStorage.getItem('yatlo_lang') || 'ar'
         };
-        this.currentViewMode = 'khatma';
+
+        // Comprehensive Juz' start pages for dynamic lookup
+        this.juzPages = [
+            1, 22, 42, 62, 82, 102, 122, 142, 162, 182, 202, 222, 242, 262, 282,
+            302, 322, 342, 362, 382, 402, 422, 442, 462, 482, 502, 522, 542, 562, 582
+        ];
+
+        this.currentViewMode = 'wird';
         this.init();
     }
 
-    init() {
+    async init() {
+        console.log('[Khatma] init() starting; current state:', this.state);
+
+        // 1. Load Journey Cache
         const localData = localStorage.getItem('yatlo_khatma_cache');
-        if (localData) this.state.journey = JSON.parse(localData);
+        if (localData) {
+            this.state.journey = JSON.parse(localData);
+            console.log('[Khatma] loaded journey from localStorage', this.state.journey);
+            const savedMode = this.state.journey.mode;
+            if (savedMode === 'free' || savedMode === 'wird') {
+                this.currentViewMode = savedMode;
+            }
+        }
 
+        // 2. Load Free Mode Progress
         const savedFree = localStorage.getItem('yatlo_free_page');
-        if (savedFree) this.state.freePage = parseInt(savedFree);
+        if (savedFree) {
+            this.state.freePage = parseInt(savedFree);
+            console.log('[Khatma] loaded freePage from localStorage', this.state.freePage);
+        }
 
+        // 3. Load Streak & Freeze Protection
         const savedStreak = localStorage.getItem('yatlo_streak_data');
         if (savedStreak) {
             const data = JSON.parse(savedStreak);
             this.state.streak = data.streak || 0;
-            this.state.lastStreakDate = data.lastDate || null;
+            if (data.lastDate) {
+                const parsed = new Date(data.lastDate);
+                if (!isNaN(parsed)) this.state.lastStreakDate = parsed.toISOString().slice(0, 10);
+                else this.state.lastStreakDate = null;
+            } else {
+                this.state.lastStreakDate = null;
+            }
             this.state.freezes = data.freezes || 0;
             this.checkStreakValidity();
         }
+
+        // 4. Supabase Synchronization
+        try {
+            if (window.getSupabaseClient) await window.getSupabaseClient();
+            const sb = window.HadithEngine?.sb || window.sb;
+            if (sb) {
+                const { data: { user } } = await sb.auth.getUser();
+                if (user) {
+                    const server = await this.loadServerProgress();
+                    if (!server && this.state.journey) {
+                        this.persistProgress();
+                    }
+                } else {
+                    sb.auth.onAuthStateChange(async (event, session) => {
+                        if (event === 'SIGNED_IN' && session?.user) {
+                            const server = await this.loadServerProgress();
+                            this.updateUI();
+                            if (!server && this.state.journey) {
+                                this.persistProgress();
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('[Khatma] init supabase error', e);
+        }
+
         this.updateUI();
+
+        try { setTimeout(() => this.setMode(this.currentViewMode), 10); } catch (e) { }
+
+        // Action routing (e.g., from deep links)
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const surahParam = params.get('surah');
+
+            // Check if URL has a Surah number
+            if (surahParam) {
+                const surahNum = parseInt(surahParam);
+                if (!isNaN(surahNum) && surahNum >= 1 && surahNum <= 114) {
+                    this.setMode('free'); // Switch to general reading mode
+                    await Reader.fetchSurahs(); // Ensure Surah list is loaded
+                    const targetSurah = Reader.surahs.find(s => s.id === surahNum);
+
+                    if (targetSurah) {
+                        this.state.freePage = targetSurah.page;
+                        Reader.open();
+                    }
+                }
+            } else if (params.get('action') === 'resume' && this.state.journey) {
+                Reader.open();
+            }
+        } catch (e) {
+            console.error('[Khatma] URL Routing Error:', e);
+        }
     }
 
     checkStreakValidity() {
@@ -51,7 +137,7 @@ class YatloKhatma {
                 this.state.freezes -= daysToCover;
                 const fakeLastDate = new Date();
                 fakeLastDate.setDate(today.getDate() - 1);
-                this.state.lastStreakDate = fakeLastDate.toDateString();
+                this.state.lastStreakDate = fakeLastDate.toISOString().slice(0, 10);
                 alert(`تم استخدام ${this.toArabic(daysToCover)} من جمدات الحماس للحفاظ على تتابعك! ❄️`);
             } else {
                 this.state.streak = 0;
@@ -62,10 +148,10 @@ class YatloKhatma {
     }
 
     incrementStreak() {
-        const today = new Date().toDateString();
-        if (this.state.lastStreakDate !== today) {
+        const todayIso = new Date().toISOString().slice(0, 10);
+        if (this.state.lastStreakDate !== todayIso) {
             this.state.streak++;
-            this.state.lastStreakDate = today;
+            this.state.lastStreakDate = todayIso;
             if (this.state.streak % 7 === 0) {
                 this.state.freezes++;
                 alert("أحسنت! حصلت على 'جمدة حماس' مكافأة لالتزامك لمدة أسبوع! ❄️");
@@ -120,6 +206,73 @@ class YatloKhatma {
 
     save() {
         localStorage.setItem('yatlo_khatma_cache', JSON.stringify(this.state.journey));
+        this.persistProgress();
+    }
+
+    async loadServerProgress() {
+        try {
+            const sb = window.HadithEngine?.sb || window.sb;
+            if (!sb) return null;
+
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) return null;
+
+            const { data, error } = await sb
+                .from('khatma_progress')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('is_active', true)
+                .maybeSingle();
+
+            if (error || !data) return null;
+
+            let page = 1;
+            if (data.last_verse_key && data.last_verse_key.startsWith('page:')) {
+                const p = parseInt(data.last_verse_key.split(':')[1]);
+                if (!isNaN(p)) page = p;
+            } else if (data.last_page) {
+                const p = parseInt(data.last_page);
+                if (!isNaN(p)) page = p;
+            }
+
+            this.state.journey = {
+                id: 'srv_' + Date.now(),
+                current_page: page,
+                start_date: data.start_date || new Date().toISOString(),
+                end_date: data.end_date || data.start_date || new Date().toISOString(),
+                mode: 'wird'
+            };
+            localStorage.setItem('yatlo_khatma_cache', JSON.stringify(this.state.journey));
+            this.updateUI();
+            return data;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async persistProgress() {
+        try {
+            const sb = window.HadithEngine?.sb || window.sb;
+            if (!sb) return;
+
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) return;
+
+            const lastPage = this.state.journey ? this.state.journey.current_page : this.state.freePage;
+            const startDate = this.state.journey?.start_date || new Date().toISOString();
+            const endDate = this.state.journey?.end_date || startDate;
+
+            const payload = {
+                user_id: user.id,
+                is_active: true,
+                last_verse_key: `page:${lastPage}`,
+                last_page: lastPage,
+                start_date: startDate,
+                end_date: endDate,
+                updated_at: new Date().toISOString()
+            };
+            await sb.from('khatma_progress').upsert(payload, { onConflict: 'user_id' });
+        } catch (e) { }
     }
 
     resetJourney() {
@@ -139,6 +292,13 @@ class YatloKhatma {
             return Math.ceil(rem / daysLeft);
         }
         return j.fixed_pages || 5;
+    }
+
+    getJuzByPage(p) {
+        for (let i = this.juzPages.length - 1; i >= 0; i--) {
+            if (p >= this.juzPages[i]) return i + 1;
+        }
+        return 1;
     }
 
     setMode(mode) {
@@ -175,27 +335,23 @@ class YatloKhatma {
         const j = this.state.journey;
         const mode = this.currentViewMode;
         const dailyGoal = this.getDailyGoal();
+
         const modeTitle = document.getElementById('modeTitle');
         const modeStatus = document.getElementById('modeStatus');
         const targetPageDisp = document.getElementById('targetPageDisp');
         const currentPageDisp = document.getElementById('currentPageDisp');
 
         if (mode === 'free') {
-            modeTitle.innerText = "قراءة حرة";
-            modeStatus.innerText = "تصفح المصحف دون قيود";
-            targetPageDisp.innerText = this.toArabic(604);
-            currentPageDisp.innerText = this.toArabic(this.state.freePage);
-        } else if (mode === 'wird') {
-            let target = Math.min(604, j.current_page + dailyGoal - 1);
-            modeTitle.innerText = "ورد اليوم";
-            modeStatus.innerText = `المطلوب ${this.toArabic(dailyGoal)} صفحات اليوم`;
-            targetPageDisp.innerText = this.toArabic(target);
-            currentPageDisp.innerText = this.toArabic(j.current_page);
+            if (modeTitle) modeTitle.innerText = "قراءة حرة";
+            if (modeStatus) modeStatus.innerText = "تصفح المصحف دون قيود";
+            if (targetPageDisp) targetPageDisp.innerText = this.toArabic(604);
+            if (currentPageDisp) currentPageDisp.innerText = this.toArabic(this.state.freePage);
         } else {
-            modeTitle.innerText = "رحلة الختمة";
-            modeStatus.innerText = `بمعدل ${this.toArabic(dailyGoal)} صفحات يومياً`;
-            targetPageDisp.innerText = this.toArabic(604);
-            currentPageDisp.innerText = this.toArabic(j.current_page);
+            let target = Math.min(604, j.current_page + dailyGoal - 1);
+            if (modeTitle) modeTitle.innerText = "ورد اليوم";
+            if (modeStatus) modeStatus.innerText = `المطلوب ${this.toArabic(dailyGoal)} صفحات اليوم`;
+            if (targetPageDisp) targetPageDisp.innerText = this.toArabic(target);
+            if (currentPageDisp) currentPageDisp.innerText = this.toArabic(j.current_page);
         }
 
         const progress = (((mode === 'free' ? this.state.freePage : j.current_page) - 1) / 603) * 100;
@@ -209,16 +365,35 @@ class YatloKhatma {
     }
 }
 
+
+
 /** * READER LOGIC 
  */
 const Reader = {
     currentPage: 1,
     targetPage: 604,
-    activeMode: 'khatma',
+    activeMode: 'wird',
+    surahs: [],
 
     toArabic(n) { return engine.toArabic(n); },
 
-    open() {
+    async fetchSurahs() {
+        if (this.surahs.length > 0) return;
+        try {
+            // Using language=en to get transcribed names (Al-Baqarah)
+            const res = await fetch('https://api.quran.com/api/v4/chapters?language=en');
+            const data = await res.json();
+            this.surahs = data.chapters.map(s => ({
+                id: s.id,
+                nameAr: s.name_arabic,
+                nameTr: s.name_simple, // Transcribed name
+                page: s.pages[0]
+            }));
+        } catch (e) { console.error('Surah fetch failed', e); }
+    },
+
+    async open() {
+        await this.fetchSurahs();
         this.activeMode = engine.currentViewMode;
         const j = engine.state.journey;
         this.currentPage = (this.activeMode === 'free') ? engine.state.freePage : j.current_page;
@@ -232,7 +407,8 @@ const Reader = {
 
         const indicator = document.getElementById('readerModeIndicator');
         if (indicator) indicator.innerText = this.activeMode === 'wird' ? `إلى صفحة ${this.toArabic(this.targetPage)}` : "المصحف";
-        document.getElementById('readerModal').classList.remove('hidden');
+
+        document.getElementById('readerModal')?.classList.remove('hidden');
         this.render();
     },
 
@@ -244,6 +420,7 @@ const Reader = {
             rNum = (this.currentPage % 2 === 0) ? this.currentPage - 1 : this.currentPage;
             lNum = rNum + 1;
         }
+
         const load = (num, id) => {
             const img = document.getElementById(id);
             if (!img) return;
@@ -256,10 +433,83 @@ const Reader = {
             img.src = `https://quran.ksu.edu.sa/png_big/${num}.png`;
             img.onload = () => img.classList.add('loaded');
         };
+
         load(rNum, 'imgRight');
         if (!isMobile) load(lNum, 'imgLeft');
-        document.getElementById('gotoPageInput').value = this.currentPage;
+
+        const pageInput = document.getElementById('gotoPageInput');
+        if (pageInput) pageInput.value = this.currentPage;
+
+        // --- UPDATED SECTION START ---
+        // Sync Search Placeholder with Arabic Surah & Juz
+        const currentSurah = [...this.surahs].reverse().find(s => s.page <= this.currentPage);
+        const searchInput = document.getElementById('surahSearchInput');
+
+        if (searchInput && currentSurah) {
+            const juzNum = engine.getJuzByPage(this.currentPage);
+            const juzAr = this.toArabic(juzNum);
+            // Result: "سورة البقرة (الجزء ٢)"
+            searchInput.placeholder = `${currentSurah.nameAr} (الجزء ${juzAr})`;
+        }
+        // --- UPDATED SECTION END ---
+
         this.updateBookmarkPosition(rNum, lNum);
+    },
+
+    showSurahList(show) {
+        const list = document.getElementById('surahDropdownList');
+        if (!list) return;
+        if (show) {
+            list.classList.remove('hidden');
+            this.filterSurahDropdown();
+        } else {
+            setTimeout(() => list.classList.add('hidden'), 250);
+        }
+    },
+
+    filterSurahDropdown() {
+        const input = document.getElementById('surahSearchInput');
+        const list = document.getElementById('surahDropdownList');
+        if (!input || !list) return;
+
+        const query = input.value.toLowerCase();
+
+        // Handle Juz searches
+        if (query.startsWith('j') || query.startsWith('ج')) {
+            const juzNum = parseInt(query.replace(/\D/g, ''));
+            if (juzNum >= 1 && juzNum <= 30) {
+                const page = engine.juzPages[juzNum - 1];
+                list.innerHTML = `
+                    <div onclick="Reader.selectSurah(${page})" 
+                         class="p-4 bg-teal-600/20 text-white cursor-pointer border-b border-white/10">
+                        Jump to Juz ${juzNum} (Page ${this.toArabic(page)})
+                    </div>`;
+                return;
+            }
+        }
+
+        const filtered = this.surahs.filter(s =>
+            s.nameAr.includes(query) || s.nameTr.toLowerCase().includes(query)
+        );
+
+        list.innerHTML = filtered.map(s => `
+            <div onclick="Reader.selectSurah(${s.page})" 
+                 class="p-3 border-b border-white/5 hover:bg-teal-600/30 cursor-pointer flex justify-between items-center transition-colors">
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold">${s.nameAr}</span>
+                    <span class="text-[10px] text-teal-200">${s.nameTr}</span>
+                </div>
+                <span class="opacity-50 text-[10px]">ص ${this.toArabic(s.page)}</span>
+            </div>
+        `).join('');
+    },
+
+    selectSurah(page) {
+        this.currentPage = page;
+        this.render();
+        this.showSurahList(false);
+        const input = document.getElementById('surahSearchInput');
+        if (input) input.value = "";
     },
 
     goToBookmark() {
@@ -329,12 +579,14 @@ const Reader = {
                 engine.updateProgress(this.currentPage, isFree);
             }
         }
-        document.getElementById('readerModal').classList.add('hidden');
+        document.getElementById('readerModal')?.classList.add('hidden');
         engine.updateUI();
     },
 
     jumpToPage() {
-        const val = parseInt(document.getElementById('gotoPageInput').value);
+        const el = document.getElementById('gotoPageInput');
+        if (!el) return;
+        const val = parseInt(el.value);
         if (val >= 1 && val <= 604) {
             this.currentPage = val;
             this.render();
@@ -363,20 +615,74 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffX = touchStartX - touchEndX;
             const diffY = touchStartY - touchEndY;
 
-            // Threshold: 50px movement AND horizontal movement must be greater than vertical
             if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
-                // RTL Corrected Swiping:
-                // Swipe Left finger (diffX > 0) -> Move Forward (+1)
-                // Swipe Right finger (diffX < 0) -> Move Backward (-1)
+                // RTL Corrected Swiping: Swipe Left (diffX > 0) -> Next Page (+1)
                 Reader.changePage(diffX > 0 ? -1 : 1);
             }
         }, { passive: true });
     }
-    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
-        Reader.changePage(-1);
-    });
 
-    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
-        Reader.changePage(1);
-    });
+    document.getElementById('prevPageBtn')?.addEventListener('click', () => Reader.changePage(-1));
+    document.getElementById('nextPageBtn')?.addEventListener('click', () => Reader.changePage(1));
+
+    // Search input listener for transcribed filtering
+    const searchInput = document.getElementById('surahSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => Reader.filterSurahDropdown());
+        searchInput.addEventListener('focus', () => Reader.showSurahList(true));
+        searchInput.addEventListener('blur', () => Reader.showSurahList(false));
+    }
+});
+function jumpToSurah(surahId) {
+    if (!window.allSurahs) {
+        console.warn("[Khatma] Surah data not ready yet.");
+        return;
+    }
+
+    const surah = window.allSurahs.find(s => s.id == surahId);
+    if (surah) {
+        // chapters in API v4 usually have 'pages' array [start, end]
+        const targetPage = surah.pages ? surah.pages[0] : 1;
+        console.log(`[Khatma] Navigating to Surah ${surah.name_arabic} (Page ${targetPage})`);
+
+        // Update your global page state
+        currentPage = targetPage;
+
+        // Trigger your render functions
+        if (typeof renderReaderPage === 'function') renderReaderPage();
+        if (typeof syncReaderHeader === 'function') syncReaderHeader(currentPage);
+    } else {
+        console.error("[Khatma] Surah ID not found:", surahId);
+    }
+}
+async function initSurahData() {
+    try {
+        const res = await fetch('https://api.quran.com/api/v4/chapters?language=ar');
+        if (!res.ok) throw new Error("Network response was not ok");
+
+        const data = await res.json();
+        window.allSurahs = data.chapters; // Store globally for index modal access
+
+        console.log("[Khatma] Surah data loaded successfully");
+
+        // After data is ready, check if we need to jump to a specific surah from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const surahParam = urlParams.get('surah');
+        if (surahParam) {
+            jumpToSurah(surahParam);
+        }
+    } catch (e) {
+        console.error("[Khatma] Data load error:", e);
+    }
+}
+async function startApp() {
+    initSurahData();
+    setTimeout(() => { if (window.checkActiveKhatma) window.checkActiveKhatma(); }, 1500);
+}
+
+window.onload = startApp;
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-random')?.addEventListener('click', () => setMode('random'));
+    document.getElementById('btn-daily')?.addEventListener('click', () => setMode('daily'));
+    document.getElementById('surahSearch')?.addEventListener('input', filterSurahs);
 });

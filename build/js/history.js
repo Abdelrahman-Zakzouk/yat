@@ -1,10 +1,10 @@
-const SUPABASE_URL = "https://ruokjdtnpraaglmewjwa.supabase.co";
-const SUPABASE_KEY = "sb_publishable_GqCbpZBE9aT0Tv0AY3A_6Q_utNzCQA-";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let sb = window.sb || null;
 
 async function loadHistory() {
     const listEl = document.getElementById('historyList');
     const loadingEl = document.getElementById('loading');
+
+    try { await window.getSupabaseClient(); sb = window.sb || window.supabaseClient || sb; } catch (e) { console.warn('Supabase unavailable for history', e); }
 
     try {
         const { data: notes, error } = await sb

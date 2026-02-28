@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Rakkas&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/build/css/khatma.css">
+    <link rel="stylesheet" href="/build/css/style.css">
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <style>
 
@@ -17,7 +18,9 @@
 <body class="bg-[#0f1a19] text-slate-200 min-h-screen">
 
     <header class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 glass sticky top-0 z-50">
-        <a class="text-3xl font-['Rakkas'] text-teal-400" href="/index.html">يتلو</a>
+        <a class="text-3xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
+            href="/index.html">يتلو</a>
+
         <div class="flex items-center gap-3">
             <div class="flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-orange-500/20">
                 <span class="text-orange-500 text-sm">🔥</span>
@@ -30,14 +33,26 @@
                 <span id="freezeCount" class="text-white font-bold text-xs">٠</span>
             </div>
         </div>
+
+        <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+            <div class="hidden md:flex items-center gap-6">
+                <a href="/build/html/history.html"
+                    class="text-gray-400 hover:text-white transition-colors text-sm">السجل</a>
+            </div>
+            <div class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
+                <button onclick="openIndex()" class="hover:text-teal-400 transition">القائمة</button>
+            </div>
+        </nav>
+
+        <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
+            <ion-icon name="menu-outline"></ion-icon>
+        </button>
     </header>
 
     <main class="max-w-4xl mx-auto p-6">
         <div class="flex bg-[#1a2e2c] p-1 rounded-2xl border border-teal-800/50 mb-8 max-w-md mx-auto shadow-inner">
             <button onclick="engine.setMode('wird')" id="tab-wird"
                 class="flex-1 py-2 rounded-xl text-sm transition-all">ورد اليوم</button>
-            <button onclick="engine.setMode('khatma')" id="tab-khatma"
-                class="flex-1 py-2 rounded-xl text-sm transition-all">الختمة</button>
             <button onclick="engine.setMode('free')" id="tab-free"
                 class="flex-1 py-2 rounded-xl text-sm transition-all">قراءة حرة</button>
         </div>
@@ -129,12 +144,18 @@
             </div>
 
             <div class="flex-1 flex justify-center">
-                <div
-                    class="relative flex items-center bg-white/10 rounded-full px-4 py-1.5 border border-white/5 focus-within:border-teal-500/50 transition-all">
-                    <ion-icon name="search-outline" class="text-teal-400 ml-2"></ion-icon>
-                    <input type="number" id="gotoPageInput" onchange="Reader.jumpToPage()"
-                        class="bg-transparent border-none outline-none text-center w-12 font-mono text-lg text-white"
-                        placeholder="0">
+                <div class="relative w-48 sm:w-64" id="surahSearchContainer">
+                    <div
+                        class="relative flex items-center bg-white/10 rounded-full border border-white/5 focus-within:border-teal-500/50 transition-all">
+                        <ion-icon name="search-outline" class="text-teal-400 absolute right-4"></ion-icon>
+                        <input type="text" id="surahSearchInput" onfocus="Reader.showSurahList(true)"
+                            oninput="Reader.filterSurahDropdown()" placeholder="بحث عن سورة..."
+                            class="bg-transparent border-none outline-none text-right w-full pr-11 pl-4 py-2 font-['Amiri'] text-lg text-white placeholder:text-white/20">
+                    </div>
+
+                    <div id="surahDropdownList"
+                        class="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-[#0a1a1a] border border-white/10 rounded-2xl shadow-2xl hidden z-[120] custom-scrollbar">
+                    </div>
                 </div>
             </div>
 
@@ -179,6 +200,89 @@
                     التالية
                     <ion-icon name="chevron-forward-outline"></ion-icon>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Index Modal (copied from index.html) -->
+    <div id="indexModal"
+        class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/95 p-4 backdrop-blur-md">
+        <div
+            class="bg-[#1a2e2c] border border-teal-800 w-full max-w-4xl h-[90vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+
+            <div class="p-6 border-b border-teal-800/50 flex justify-between items-center bg-[#162927]">
+                <h2 class="text-2xl font-['Rakkas'] text-teal-400">القائمة</h2>
+                <button onclick="closeIndex()" class="text-slate-400 hover:text-white text-3xl">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+
+            <div class="p-2 grid grid-cols-3 gap-1.5 bg-[#162927]/30 border-b border-teal-800/30">
+
+                <button onclick="location.href='/index.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/40 rounded-lg border border-teal-700/30 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="home-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الرئيسية</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Home</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/khatma.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="flag-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">القرآن الكريم</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Quran</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/hadiths.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="book-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الأحاديث</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Hadiths</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/duas.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="heart-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الأدعية</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Duas</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/history.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-900/20 rounded-lg border border-teal-700/20 hover:bg-teal-400/10 transition-all active:scale-95">
+                    <ion-icon name="time-outline" class="text-teal-500 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">السجل</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">History</span>
+                    </div>
+                </button>
+
+                <button onclick="location.href='/build/html/profile.html'"
+                    class="flex flex-col items-center justify-center py-2 bg-teal-500/10 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all active:scale-95">
+                    <ion-icon name="person-circle-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
+                    <div class="text-center leading-tight">
+                        <span class="block font-bold text-[17px] text-white pt-0 pb-3 quran-font">الحساب الشخصي</span>
+                        <span class="block text-[12px] text-teal-600/50 uppercase tracking-widest">Profile</span>
+                    </div>
+                </button>
+
+            </div>
+
+            <div class="p-4 bg-[#162927]/50">
+                <h3 class="text-teal-500 text-xs mb-2 px-1 font-bold uppercase tracking-widest">فهرس السور</h3>
+                <input type="text" id="indexSearch" oninput="renderIndex()" placeholder="ابحث عن سورة..."
+                    class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white focus:border-teal-400 outline-none">
+            </div>
+
+            <div id="indexGrid"
+                class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 custom-scrollbar">
             </div>
         </div>
     </div>

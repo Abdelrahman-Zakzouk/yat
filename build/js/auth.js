@@ -14,8 +14,9 @@ const AuthUI = {
     subtitle: null,
     toggleText: null,
 
-    init() {
+    async init() {
         console.log("AuthUI: Searching for Supabase client...");
+        try { await window.getSupabaseClient(); } catch (e) { /* will fallback to existing globals */ }
 
         // Find the Supabase client - checking HadithEngine specifically
         this.sb = window.supabaseClient || window.sb || (window.HadithEngine ? window.HadithEngine.sb : null);

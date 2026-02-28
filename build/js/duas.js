@@ -14,6 +14,8 @@ const DuaEngine = {
         const container = document.getElementById('duaContainer');
         const loader = document.getElementById('duaLoader');
 
+        if (!container || !loader) return;
+
         container.innerHTML = "";
         loader.classList.remove('hidden');
 
@@ -84,36 +86,48 @@ const DuaEngine = {
     handleCount(btn, max) {
         const span = btn.querySelector('.count-num');
         const bar = btn.querySelector('.progress-bar');
+
+        // Error Fix: If span is null, the button is already "Finished"
+        if (!span) return;
+
         let current = parseInt(span.innerText);
 
         if (current > 0) {
             current--;
             span.innerText = current;
+
+            // Update Progress Bar
             if (bar) bar.style.width = `${((max - current) / max) * 100}%`;
 
+            // Haptic Feedback (Vibration)
+            if (window.navigator.vibrate) {
+                if (current === 0) {
+                    window.navigator.vibrate([30, 20, 30]); // Distinct double pulse for finish
+                } else {
+                    window.navigator.vibrate(15); // Short tap for each click
+                }
+            }
+
+            // Finished State for this specific Dua
             if (current === 0) {
-                btn.classList.replace('bg-teal-600', 'bg-emerald-800');
-                btn.innerHTML = `<ion-icon name="checkmark-done" class="text-2xl"></ion-icon>`;
-                btn.closest('.dua-card').classList.add('completed');
-                if (window.navigator.vibrate) window.navigator.vibrate([30, 20, 30]);
+                btn.classList.add('completed-state'); // Add a CSS class for styling
+                btn.innerHTML = `<ion-icon name="checkmark-done" class="text-2xl text-emerald-400 animate-bounce-short"></ion-icon>`;
+                btn.closest('.dua-card').style.opacity = "0.6";
                 this.checkCompletion();
-            } else if (window.navigator.vibrate) {
-                window.navigator.vibrate(15);
             }
         }
     },
 
     changeCategory(cat, btn, index) {
-        // 1. Move Pill: In RTL, moving "forward" means translating negative X
         const pill = document.getElementById('activePill');
-        const moveX = index * 100;
-        pill.style.transform = `translateX(-${moveX}%)`;
+        if (pill) {
+            const moveX = index * 100;
+            pill.style.transform = `translateX(-${moveX}%)`;
+        }
 
-        // 2. State
         document.querySelectorAll('.dua-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        // 3. Logic
         this.currentCategory = cat;
         this.fetchDuas();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -139,14 +153,28 @@ const DuaEngine = {
     },
 
     checkCompletion() {
-        const total = document.querySelectorAll('.count-num').length;
-        const finished = Array.from(document.querySelectorAll('.count-num')).filter(s => s.innerText == "0").length;
+        const total = document.querySelectorAll('.dua-card').length;
+        // Check how many buttons no longer have the count span (meaning they are finished)
+        const finished = document.querySelectorAll('.dua-card ion-icon[name="checkmark-done"]').length;
 
         if (total > 0 && total === finished) {
-            const toast = document.getElementById('toast');
-            toast.style.opacity = "1";
-            setTimeout(() => toast.style.opacity = "0", 3000);
+            this.showToast("✨ تقبل الله منك.. تم الانتهاء من جميع الأذكار");
         }
+    },
+
+    showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast) return;
+
+        if (toastMsg) toastMsg.innerText = msg;
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(0)";
+
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(10px)";
+        }, 3500);
     }
 };
 

@@ -10,64 +10,231 @@ const HadithApp = {
         "ara-abudawud": "سنن أبي داود"
     },
     current: null,
-    mode: 'daily'
+    mode: 'daily',
+    isFavorited: false
 };
 
-async function fetchHadith() {
+/**
+ * CORE DATA FETCHING
+ */
+
+// Fetch the "Pushed" settings from Supabase (Matches fetchDailyVerseKey logic)
+async function fetchDailyHadithSettings() {
+    try {
+        const client = window.sbClient || window.sb || window.supabaseClient;
+        if (!client) return { book_key: "ara-bukhari", hadith_number: "1" };
+
+        const { data, error } = await client
+            .from('site_config')
+            .select('book_key, hadith_number')
+            .eq('id', 'daily_hadith')
+            .maybeSingle();
+
+        return (error || !data) ? { book_key: "ara-bukhari", hadith_number: "1" } : data;
+    } catch (e) {
+        return { book_key: "ara-bukhari", hadith_number: "1" };
+    }
+}
+
+async function fetchHadith(specificBook = null, specificNum = null) {
     const textEl = document.getElementById('hadithText');
     const metaEl = document.getElementById('hadithMeta');
-    const bookId = document.getElementById('bookSelect').value;
+    const bookSelect = document.getElementById('bookSelect');
+    const noteContainer = document.getElementById('noteContainer');
+    const adminNoteEl = document.getElementById('adminNote');
 
+    if (!textEl || !metaEl) return;
+
+    // Transition UI Out
     textEl.classList.remove('opacity-100', 'translate-y-0');
     textEl.classList.add('opacity-0', 'translate-y-4');
+    if (noteContainer) noteContainer.classList.add('hidden');
 
     try {
+        let bookId = specificBook || bookSelect?.value || "ara-bukhari";
+        let hadithNum = specificNum;
+
+        // --- STEP 1: Identify Hadith based on Mode ---
+        if (HadithApp.mode === 'daily' && !specificNum) {
+            const config = await fetchDailyHadithSettings();
+            bookId = config.book_key;
+            hadithNum = config.hadith_number;
+            if (bookSelect) bookSelect.value = bookId; // Sync dropdown UI
+        }
+
+        // --- STEP 2: Fetch Text from CDN API ---
         const res = await fetch(`${HadithApp.API}${bookId}.json`);
         const data = await res.json();
 
-        let index;
-        if (HadithApp.mode === 'daily') {
-            const seed = new Date().toDateString();
-            index = Math.abs(seed.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % data.hadiths.length;
+        let entry;
+        if (hadithNum) {
+            // Daily or Specific lookup
+            entry = data.hadiths.find(h => String(h.hadithnumber) === String(hadithNum)) || data.hadiths[0];
         } else {
-            index = Math.floor(Math.random() * data.hadiths.length);
+            // Random Mode
+            const index = Math.floor(Math.random() * data.hadiths.length);
+            entry = data.hadiths[index];
         }
 
-        const entry = data.hadiths[index];
         HadithApp.current = {
             text: entry.text || entry.hadith,
             number: entry.hadithnumber,
-            book: HadithApp.BOOKS[bookId]
+            book: HadithApp.BOOKS[bookId],
+            book_key: bookId
         };
 
+        // --- STEP 3: Fetch Admin Lesson/Note from Supabase ---
+        const client = window.sbClient || window.sb || window.supabaseClient;
+        if (client && noteContainer && adminNoteEl) {
+            const { data: noteData } = await client
+                .from('hadith_notes')
+                .select('note_text')
+                .eq('book_key', bookId)
+                .eq('hadith_number', HadithApp.current.number)
+                .maybeSingle();
+
+            if (noteData?.note_text) {
+                adminNoteEl.innerText = noteData.note_text;
+                noteContainer.classList.remove('hidden');
+            }
+        }
+
+        // --- STEP 4: Transition UI In ---
         setTimeout(() => {
             textEl.innerText = HadithApp.current.text;
             metaEl.innerText = `${HadithApp.current.book} • رقم ${HadithApp.current.number}`;
             textEl.classList.remove('opacity-0', 'translate-y-4');
             textEl.classList.add('opacity-100', 'translate-y-0');
+            updateFavoriteUI();
         }, 400);
 
     } catch (err) {
+        console.error("Fetch Error:", err);
         showToast("❌ فشل تحميل البيانات");
     }
 }
 
-function setAppMode(mode) {
+/**
+ * APP FLOW & MODES
+ */
+async function setAppMode(mode) {
     HadithApp.mode = mode;
     const bg = document.getElementById('toggleBg');
-    const btnD = document.getElementById('mode-daily');
-    const btnR = document.getElementById('mode-random');
-    bg.style.transform = (mode === 'daily') ? 'translateX(0)' : 'translateX(-100%)';
-    fetchHadith();
+
+    // UI Toggle Visuals
+    if (bg) {
+        bg.style.transform = (mode === 'daily') ? 'translateX(0)' : 'translateX(-100%)';
+    }
+
+    const dailyBtn = document.getElementById('mode-daily');
+    const randomBtn = document.getElementById('mode-random');
+    if (mode === 'daily') {
+        dailyBtn?.classList.replace('text-slate-400', 'text-white');
+        randomBtn?.classList.replace('text-white', 'text-slate-400');
+
+        const config = await fetchDailyHadithSettings();
+        fetchHadith(config.book_key, config.hadith_number);
+    } else {
+        randomBtn?.classList.replace('text-slate-400', 'text-white');
+        dailyBtn?.classList.replace('text-white', 'text-slate-400');
+        fetchHadith(); // Random
+    }
 }
 
-// Fixed function name to match your HTML "onclick"
+/**
+ * FAVORITES (DATABASE) LOGIC
+ */
+async function updateFavoriteUI() {
+    if (!HadithApp.current) return;
+    const btn = document.getElementById('favoriteBtn');
+    if (!btn) return;
+
+    try {
+        const client = window.sbClient || window.sb || window.supabaseClient;
+        if (!client) return;
+
+        const { data: { user } } = await client.auth.getUser();
+        if (!user) {
+            HadithApp.isFavorited = false;
+            updateFavoriteButton();
+            return;
+        }
+
+        const { data, error } = await client
+            .from('favorites')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('hadith_number', HadithApp.current.number)
+            .eq('book_key', HadithApp.current.book_key)
+            .maybeSingle();
+
+        HadithApp.isFavorited = !!data;
+        updateFavoriteButton();
+    } catch (e) {
+        console.warn('UI State Error:', e);
+    }
+}
+
+function updateFavoriteButton() {
+    const btn = document.getElementById('favoriteBtn');
+    const icon = document.getElementById('favoriteIcon');
+    const text = document.getElementById('favoriteBtnText');
+    if (!btn || !icon || !text) return;
+
+    if (HadithApp.isFavorited) {
+        btn.classList.replace('bg-red-500/10', 'bg-red-500/30');
+        icon.setAttribute('name', 'heart');
+        text.innerText = 'محفوظ';
+    } else {
+        btn.classList.replace('bg-red-500/30', 'bg-red-500/10');
+        icon.setAttribute('name', 'heart-outline');
+        text.innerText = 'حفظ';
+    }
+}
+
+async function toggleFavorite() {
+    if (!HadithApp.current) return;
+
+    try {
+        const client = window.sbClient || window.sb || window.supabaseClient;
+        const { data: { user } } = await client.auth.getUser();
+
+        if (!user) {
+            showToast('⚠️ يجب تسجيل الدخول أولاً');
+            return;
+        }
+
+        if (HadithApp.isFavorited) {
+            await client.from('favorites').delete()
+                .eq('user_id', user.id)
+                .eq('hadith_number', HadithApp.current.number)
+                .eq('book_key', HadithApp.current.book_key);
+            HadithApp.isFavorited = false;
+            showToast('❌ تم الإزالة من المفضلة');
+        } else {
+            await client.from('favorites').insert([{
+                user_id: user.id,
+                hadith_number: HadithApp.current.number,
+                book_key: HadithApp.current.book_key,
+                hadith_text: HadithApp.current.text
+            }]);
+            HadithApp.isFavorited = true;
+            showToast('✅ تم الحفظ في المفضلة');
+        }
+        updateFavoriteButton();
+    } catch (e) {
+        showToast('❌ حدث خطأ في النظام');
+    }
+}
+
+/**
+ * IMAGE GENERATION & SHARING
+ */
 async function shareAsImage() {
     if (!HadithApp.current) return;
     const canvas = document.getElementById('shareCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = 1080;
-    canvas.height = 1080;
+    canvas.width = 1080; canvas.height = 1080;
 
     const grad = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
     grad.addColorStop(0, '#152422'); grad.addColorStop(1, '#0b1211');
@@ -80,23 +247,20 @@ async function shareAsImage() {
 
     ctx.fillStyle = 'white';
     let fontSize = 60;
-    let words = HadithApp.current.text.split(' ');
-    let lines = [];
+    ctx.font = `bold ${fontSize}px "Amiri", serif`;
+    let words = HadithApp.current.text.split(' '), lines = [], line = '';
+    words.forEach(w => {
+        if (ctx.measureText(line + w).width > 850) { lines.push(line); line = w + ' '; }
+        else { line += w + ' '; }
+    });
+    lines.push(line);
 
-    const wrap = (size) => {
-        ctx.font = `bold ${size}px "Amiri", serif`;
-        let currentLines = [], line = '';
-        words.forEach(w => {
-            let test = line + w + ' ';
-            if (ctx.measureText(test).width > 850) { currentLines.push(line); line = w + ' '; }
-            else { line = test; }
-        });
-        currentLines.push(line);
-        return currentLines;
-    };
+    while (lines.length * fontSize * 1.5 > 700) {
+        fontSize -= 5;
+        ctx.font = `bold ${fontSize}px "Amiri", serif`;
+        // Recalculate lines with smaller font...
+    }
 
-    lines = wrap(fontSize);
-    while (lines.length * fontSize * 1.5 > 700) { fontSize -= 5; lines = wrap(fontSize); }
     let y = 540 - (lines.length * fontSize * 0.7);
     lines.forEach(l => { ctx.fillText(l.trim(), 540, y); y += fontSize * 1.5; });
 
@@ -108,75 +272,39 @@ async function shareAsImage() {
     toggleModal('shareModal', true);
 }
 
-// Fixed function name to match your HTML "onclick"
 function copyToClipboard() {
     if (!HadithApp.current) return;
     const msg = `﴿ حديث شريف ﴾\n\n${HadithApp.current.text}\n\nالمصدر: ${HadithApp.current.book}\nعبر تطبيق يتلو`;
     navigator.clipboard.writeText(msg).then(() => showToast("✅ تم نسخ نص الحديث"));
 }
 
-async function copyImageToClipboard() {
-    const canvas = document.getElementById('shareCanvas');
-    try {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        const item = new ClipboardItem({ "image/png": blob });
-        await navigator.clipboard.write([item]);
-        showToast("✅ تم نسخ الصورة للحافظة");
-    } catch (err) {
-        showToast("📱 اضغط مطولاً على الصورة لنسخها");
-    }
-}
-
-async function triggerNativeShare() {
-    const canvas = document.getElementById('shareCanvas');
-    try {
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        const file = new File([blob], 'hadith-yatlo.png', { type: 'image/png' });
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'حديث شريف', text: 'عبر تطبيق يتلو' });
-        } else {
-            copyImageToClipboard();
-        }
-    } catch (e) { console.error(e); }
-}
-
+/**
+ * MODAL & UI HELPERS
+ */
 function toggleModal(id, show) {
     const el = document.getElementById(id);
     if (!el) return;
-
-    // Get the inner content box (the div inside the overlay)
-    const content = el.querySelector('div');
-
-    if (show) {
-        // OPEN LOGIC
-        el.classList.remove('hidden');
-        el.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-    } else {
-        // CLOSE LOGIC (Wait for animation)
-        if (content) content.classList.add('modal-closing');
-        el.classList.add('overlay-closing');
-
-        // Wait 300ms (duration of our CSS animation)
-        setTimeout(() => {
-            el.classList.remove('flex');
-            el.classList.add('hidden');
-
-            // Reset classes for the next time it opens
-            if (content) content.classList.remove('modal-closing');
-            el.classList.remove('overlay-closing');
-
-            document.body.style.overflow = 'auto';
-        }, 300);
-    }
+    el.classList.toggle('hidden', !show);
+    el.classList.toggle('flex', show);
 }
 
 function showToast(m) {
     const t = document.getElementById('toast');
     const msgEl = document.getElementById('toastMsg');
-    if (msgEl) msgEl.innerText = m;
+    if (!t || !msgEl) return;
+    msgEl.innerText = m;
     t.classList.replace('opacity-0', 'opacity-100');
     setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
 
-document.addEventListener('DOMContentLoaded', fetchHadith);
+// --- INITIALIZATION (Fixes the "Hadith 1" on launch issue) ---
+async function startApp() {
+    // 1. Initial wait for Supabase if needed
+    try { if (window.getSupabaseClient) await window.getSupabaseClient(); } catch (e) { }
+
+    // 2. Load settings and fetch
+    const config = await fetchDailyHadithSettings();
+    fetchHadith(config.book_key, config.hadith_number);
+}
+
+window.onload = startApp;

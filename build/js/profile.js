@@ -6,9 +6,11 @@ const ProfileManager = {
     user: null,
 
     async init() {
-        // SAFETY CHECK: Ensure the Supabase engine is loaded from hadiths.js
-        if (typeof HadithEngine === 'undefined' || !HadithEngine.sb) {
-            console.error("HadithEngine not found. Ensure hadiths.js is loaded before profile.js");
+        // Ensure Supabase client is ready (avoid race when global.js loads the lib)
+        try {
+            await window.getSupabaseClient();
+        } catch (e) {
+            console.error('Supabase client not ready:', e);
             return;
         }
 
@@ -131,9 +133,20 @@ const ProfileManager = {
 
         if (!container) return;
 
+        // Local mapping fallback if HadithApp isn't loaded on this page
+        const bookNames = {
+            "ara-bukhari": "صحيح البخاري",
+            "ara-muslim": "صحيح مسلم",
+            "ara-nasai": "سنن النسائي",
+            "ara-abudawud": "سنن أبي داود"
+        };
+
         try {
-            const { data: favs, error } = await HadithEngine.sb
-                .from('hadith_notes')
+            const sb = window.sbClient || window.sb || window.supabaseClient;
+            if (!sb) return;
+
+            const { data: favs, error } = await sb
+                .from('favorites')
                 .select('*')
                 .eq('user_id', this.user.id)
                 .order('created_at', { ascending: false });
@@ -154,7 +167,12 @@ const ProfileManager = {
             if (countEl) countEl.innerText = favs.length;
             if (statusEl) statusEl.innerText = `${favs.length} حديث`;
 
-            container.innerHTML = favs.map(item => `
+            container.innerHTML = favs.map(item => {
+                // Use HadithApp if it exists, otherwise use our local mapping
+                const bookMap = (window.HadithApp && window.HadithApp.BOOKS) ? window.HadithApp.BOOKS : bookNames;
+                const displayBook = bookMap[item.book_key] || item.book_key;
+
+                return `
                 <div id="fav-${item.id}" class="glass-card rounded-[2rem] p-6 transition-all hover:border-teal-500/30 group mb-4">
                     <p class="quran-font text-xl text-right text-white/90 mb-4 leading-loose">
                         ${item.hadith_text || 'نص الحديث غير متوفر'}
@@ -165,11 +183,11 @@ const ProfileManager = {
                             <i class="fas fa-trash-alt"></i> حذف
                         </button>
                         <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                            ${(HadithEngine.BOOKS && HadithEngine.BOOKS[item.book_key]) || item.book_key} | رقم ${item.hadith_number}
+                            ${displayBook} | رقم ${item.hadith_number}
                         </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
         } catch (e) {
             console.error("Load Favorites Error:", e);
@@ -178,12 +196,15 @@ const ProfileManager = {
     },
 
     async removeFavorite(id) {
-        const { error } = await HadithEngine.sb
-            .from('hadith_notes')
-            .delete()
-            .eq('id', id);
+        try {
+            const sb = window.sbClient || window.sb || window.supabaseClient;
+            const { error } = await sb
+                .from('favorites') // Corrected table
+                .delete()
+                .eq('id', id);
 
-        if (!error) {
+            if (error) throw error;
+
             const element = document.getElementById(`fav-${id}`);
             if (element) {
                 element.style.transform = "scale(0.95)";
@@ -191,7 +212,8 @@ const ProfileManager = {
                 setTimeout(() => this.loadFavorites(), 300);
             }
             showToast("✅ تم الحذف من المفضلة");
-        } else {
+        } catch (err) {
+            console.error("Remove Error:", err);
             showToast("❌ فشل الحذف");
         }
     }

@@ -83,10 +83,16 @@
                 <div class="w-full flex-grow flex items-center justify-center">
                     <p id="hadithText"
                         class="hadith-text text-2xl md:text-4xl text-center text-white transition-all duration-700 ease-in-out opacity-0 translate-y-4">
-                        بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ...
                     </p>
                 </div>
                 <div class="mt-14 flex flex-wrap justify-center gap-5 w-full pt-10 border-t border-teal-800/20">
+                    <button onclick="toggleFavorite()"
+                        class="flex items-center gap-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-8 py-4 rounded-2xl border border-red-500/30 transition-all active:scale-95 group"
+                        id="favoriteBtn">
+                        <ion-icon name="heart-outline" class="text-2xl group-hover:scale-110 transition-transform"
+                            id="favoriteIcon"></ion-icon>
+                        <span class="text-sm font-bold uppercase tracking-wider" id="favoriteBtnText">حفظ</span>
+                    </button>
                     <button onclick="copyToClipboard()"
                         class="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-2xl border border-white/5 transition-all active:scale-95 group">
                         <ion-icon name="copy-outline"
@@ -102,6 +108,13 @@
                 </div>
             </div>
         </section>
+        <div id="noteContainer" class="hidden w-full mt-8 p-6 rounded-2xl bg-teal-500/5 border border-teal-500/20">
+            <div class="flex items-center gap-2 mb-2">
+                <ion-icon name="journal-outline" class="text-teal-400"></ion-icon>
+                <span class="text-xs font-bold text-teal-500 uppercase tracking-widest">إضاءة تعليمية</span>
+            </div>
+            <p id="adminNote" class="text-slate-300 text-lg leading-relaxed italic"></p>
+        </div>
     </main>
 
     <div id="shareModal"
@@ -149,7 +162,7 @@
             </div>
 
             <div class="p-2 grid grid-cols-3 gap-1.5 bg-[#162927]/30 border-b border-teal-800/30">
-                <button onclick="closeIndex(); window.scrollTo({top: 0, behavior: 'smooth'});"
+                <button onclick="location.href='/index.html'"
                     class="flex flex-col items-center justify-center py-2 bg-teal-900/40 rounded-lg border border-teal-700/30 hover:bg-teal-400/10 transition-all active:scale-95">
                     <ion-icon name="home-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
                     <div class="text-center leading-tight">
@@ -204,13 +217,9 @@
                 </button>
             </div>
 
-            <div class="p-4 bg-[#162927]/50">
-                <h3 class="text-teal-500 text-xs mb-2 px-1 font-bold uppercase tracking-widest">فهرس السور</h3>
-                <input type="text" id="indexSearch" placeholder="ابحث عن سورة..."
-                    class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white focus:border-teal-400 outline-none">
-            </div>
 
-            <div id="indexGrid"
+
+            <div id="indexHadithGrid"
                 class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 custom-scrollbar">
             </div>
         </div>

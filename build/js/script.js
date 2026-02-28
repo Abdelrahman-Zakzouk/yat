@@ -3,11 +3,6 @@
  * Features: UI Logic, Audio, Search, Tafsir, and Mobile-Optimized Native Sharing.
  */
 
-// --- CONFIGURATION ---
-// const SUPABASE_URL = 'https://ruokjdtnpraaglmewjwa.supabase.co';
-// const SUPABASE_KEY = 'sb_publishable_GqCbpZBE9aT0Tv0AY3A_6Q_utNzCQA-';
-// const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 // --- GLOBAL STATE ---
 let currentSurahNumber = null;
 let currentVerseKey = null;
@@ -20,10 +15,6 @@ const TOTAL_QURAN_VERSES = 6236;
 /**
  * Applies global Hamza override filter.
  */
-function safeFilter(data) {
-  if (window.safeFilter) return window.safeFilter(data);
-  return typeof data === 'string' ? data.replace(/[أإآا]/g, 'ا').replace(/[ىي]/g, 'ي') : data;
-}
 
 // --- 1. AUDIO REACTIVITY ---
 currentAudio.addEventListener('play', () => {
@@ -48,7 +39,10 @@ function resetAudioUI() {
 
 async function fetchDailyVerseKey() {
   try {
-    const { data, error } = await sbClient.from('site_config').select('verse_key').eq('id', 'daily_verse').maybeSingle();
+    try { await window.getSupabaseClient(); } catch (e) { }
+    const client = window.sbClient || window.sb || window.supabaseClient;
+    if (!client) return "2:255";
+    const { data, error } = await client.from('site_config').select('verse_key').eq('id', 'daily_verse').maybeSingle();
     return (error || !data) ? "2:255" : data.verse_key;
   } catch (e) { return "2:255"; }
 }
@@ -59,19 +53,37 @@ async function fetchVerseNote(verseKey) {
   if (!notePanel || !noteContent) return;
 
   try {
-    const { data } = await sbClient.from('verse_notes').select('note_text').eq('verse_key', verseKey).maybeSingle();
+    try { await window.getSupabaseClient(); } catch (e) { }
+    const client = window.sbClient || window.sb || window.supabaseClient;
+
+    if (!client) {
+      notePanel.classList.add('hidden');
+      return;
+    }
+
+    const { data, error } = await client
+      .from('verse_notes')
+      .select('note_text')
+      .eq('verse_key', verseKey)
+      .maybeSingle();
+
+    if (error) throw error;
+
     if (data?.note_text?.trim()) {
       noteContent.innerHTML = `
-                <div class="lesson-container fade-in">
-                    <span class="lesson-title">هدايات الآية:</span>
-                    <p class="lesson-text">${safeFilter(data.note_text)}</p>
-                </div>
-            `;
+        <div class="lesson-container fade-in">
+          <span class="lesson-title text-teal-400 font-bold block mb-2">هدايات الآية:</span>
+          <p class="lesson-text text-slate-300 leading-relaxed">${data.note_text}</p>
+        </div>
+      `;
       notePanel.classList.remove('hidden');
     } else {
       notePanel.classList.add('hidden');
     }
-  } catch (e) { notePanel.classList.add('hidden'); }
+  } catch (e) {
+    console.error("Verse Note Error:", e);
+    notePanel.classList.add('hidden');
+  }
 }
 
 async function initSurahData() {
@@ -153,6 +165,17 @@ function searchVerse() {
   if (window.closeIndex) window.closeIndex();
 }
 
+/**
+ * Redirects to the main Quran reader (khatma.html) at the specific Surah
+ */
+function goToSurah() {
+  if (currentSurahNumber) {
+    window.location.href = `/build/html/khatma.html?surah=${currentSurahNumber}`;
+  } else {
+    window.location.href = `/build/html/khatma.html`;
+  }
+}
+
 // --- 4. CORE FETCHING ---
 
 function fetchVerseByKey(verseKey) {
@@ -170,7 +193,7 @@ function fetchVerseByKey(verseKey) {
       const verse = data.verse;
       currentVerseKey = verse.verse_key;
       const [surahNum, verseNum] = currentVerseKey.split(':');
-      currentSurahNumber = surahNum;
+      currentSurahNumber = surahNum; // Update global state for goToSurah()
 
       verseEl.innerHTML = `﴿ ${verse.text_uthmani} ﴾`;
       verseEl.style.opacity = '1';
@@ -181,7 +204,7 @@ function fetchVerseByKey(verseKey) {
       }
       loadRecitation();
       fetchVerseNote(currentVerseKey);
-      cachedFile = null; // Clear old file cache
+      cachedFile = null;
     })
     .catch(() => console.error("Failed to load verse"));
 }
@@ -244,7 +267,7 @@ async function toggleTafsir() {
   } catch (error) { content.innerText = "خطأ في الاتصال."; }
 }
 
-// --- 6. SHARING & CANVAS (MOBILE SECURITY FIXED) ---
+// --- 6. SHARING & CANVAS ---
 
 async function shareAsImage() {
   const canvas = document.getElementById('shareCanvas');
@@ -257,7 +280,6 @@ async function shareAsImage() {
   const verseText = document.getElementById('verse').innerText;
   const chapterText = document.getElementById('chapter').innerText;
 
-  // 1. Render Canvas
   canvas.width = 1080; canvas.height = 1080;
   const grad = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
   grad.addColorStop(0, '#152422'); grad.addColorStop(1, '#0b1211');
@@ -283,7 +305,6 @@ async function shareAsImage() {
   ctx.fillStyle = '#2dd4bf'; ctx.font = '30px "Rakkas", serif';
   ctx.fillText('تطبيق يتلو | Yatlo Quran', 540, 1030);
 
-  // 2. CRITICAL MOBILE FIX: Pre-cache as File immediately
   preview.src = canvas.toDataURL('image/png', 0.8);
   canvas.toBlob(blob => {
     cachedFile = new File([blob], `Ayah-${currentVerseKey}.png`, { type: "image/png" });
@@ -293,17 +314,8 @@ async function shareAsImage() {
   setTimeout(() => modal.classList.add('active'), 50);
 }
 
-function shareTo(platform) {
-  if (platform === 'copy') {
-    copyImageToClipboard();
-  } else {
-    nativeShare();
-  }
-}
-
 async function nativeShare() {
   if (!cachedFile) return;
-
   try {
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [cachedFile] })) {
       await navigator.share({
@@ -312,10 +324,9 @@ async function nativeShare() {
         text: 'تدبر قوله تعالى'
       });
     } else {
-      // Fallback for non-supporting browsers: Trigger Copy
       copyImageToClipboard();
     }
-  } catch (err) { console.error("Native share cancelled or failed"); }
+  } catch (err) { console.error("Native share failed"); }
 }
 
 async function copyImageToClipboard() {

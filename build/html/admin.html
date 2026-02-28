@@ -6,50 +6,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>يتلو | لوحة التحكم</title>
 
-    <link rel="stylesheet" href="/build/css/admin.css">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
         rel="stylesheet" />
+
+    <style>
+        :root {
+            --teal-primary: #14b8a6;
+            --dark-bg: #0a0a0a;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Amiri', serif;
+        }
+
+        .admin-glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+        }
+
+        .admin-input-premium {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(20, 184, 166, 0.2);
+            border-radius: 12px;
+            padding: 14px;
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .admin-input-premium:focus {
+            border-color: var(--teal-primary);
+            box-shadow: 0 0 15px rgba(20, 184, 166, 0.1);
+        }
+
+        .admin-push-btn {
+            width: 100%;
+            background: var(--teal-primary);
+            color: white;
+            font-weight: bold;
+            padding: 16px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .admin-push-btn:hover {
+            background: #0d9488;
+            transform: translateY(-2px);
+        }
+
+        .admin-push-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--teal-primary);
+            border-radius: 10px;
+        }
+    </style>
 </head>
 
-<body class="admin-body flex flex-col items-center justify-start min-h-screen p-4">
-    <nav class="fixed top-0 left-0 right-0 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 z-50">
-        <header
-            class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 bg-[#162927]/80 backdrop-blur-md">
+<body class="min-h-screen">
+
+    <nav class="fixed top-0 left-0 right-0 bg-[#162927]/90 backdrop-blur-md border-b border-teal-900/50 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
                 href="/index.html">يتلو</a>
 
-            <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-                <button onclick="openIndex()" class="hover:text-teal-400 transition">القائمة</button>
-            </nav>
-    </nav>
-    <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
-        <ion-icon name="menu-outline"></ion-icon>
-    </button>
-    </header>
+            <div class="flex items-center gap-4">
+                <button onclick="location.href='/index.html'"
+                    class="hidden md:block text-slate-400 hover:text-teal-400 transition text-sm uppercase tracking-widest">الموقع
+                    الرئيسي</button>
+                <button onclick="openIndex()" class="text-teal-400 text-3xl flex items-center">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
     </nav>
 
-    <div id="loginOverlay" class="fixed inset-0 z-[200] bg-[#0a0a0a] flex flex-col items-center justify-center p-6">
-        <div class="flex flex-col items-center gap-4">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
-            <h2 class="text-xl font-bold text-teal-400 animate-pulse">جاري التحقق من صلاحيات المسؤول...</h2>
-        </div>
+    <div id="loginOverlay"
+        class="fixed inset-0 z-[200] bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-teal-500 mb-6"></div>
+        <h2 class="text-2xl font-bold text-teal-400 animate-pulse">جاري التحقق من صلاحيات المسؤول...</h2>
+        <p class="text-slate-500 mt-2">يرجى الانتظار لحظات</p>
     </div>
 
-    <main id="adminContent" class="hidden max-w-xl w-full mx-auto py-24">
+    <main id="adminContent" class="hidden max-w-2xl w-full mx-auto pt-32 pb-12 px-4">
+
         <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="admin-glass p-6 text-center border border-teal-500/20 bg-teal-500/5">
+            <div class="admin-glass p-6 text-center">
                 <div class="flex items-center justify-center gap-2 text-teal-400 mb-1">
                     <ion-icon name="people-outline" class="text-xl"></ion-icon>
                     <span class="text-[10px] uppercase tracking-widest font-bold">نشط الآن</span>
                 </div>
                 <div id="activeUsersCount" class="text-3xl font-bold text-white">1</div>
             </div>
-            <div class="admin-glass p-6 text-center border border-teal-500/20 bg-teal-500/5">
+            <div class="admin-glass p-6 text-center">
                 <div class="flex items-center justify-center gap-2 text-teal-400 mb-1">
                     <ion-icon name="eye-outline" class="text-xl"></ion-icon>
                     <span class="text-[10px] uppercase tracking-widest font-bold">إجمالي الزيارات</span>
@@ -57,98 +125,93 @@
                 <div id="totalVisitsCount" class="text-3xl font-bold text-white">...</div>
             </div>
         </div>
-        <div class="flex bg-[#162927]/50 backdrop-blur-md rounded-2xl p-1 mb-8 border border-white/5">
+
+        <div class="flex bg-white/5 backdrop-blur-md rounded-2xl p-1 mb-8 border border-white/5">
             <button id="quranTabBtn" onclick="switchAdminMode('quran')"
                 class="flex-1 py-3 rounded-xl bg-teal-600 text-white font-bold transition-all">آية اليوم</button>
             <button id="hadithTabBtn" onclick="switchAdminMode('hadith')"
-                class="flex-1 py-3 rounded-xl text-slate-400 font-bold transition-all">هدايات الأحاديث</button>
+                class="flex-1 py-3 rounded-xl text-slate-400 font-bold transition-all">حديث اليوم</button>
             <button id="rolesTabBtn" onclick="switchAdminMode('roles')"
-                class="flex-1 py-3 rounded-xl text-slate-400 font-bold transition-all">إدارة المشرفين</button>
+                class="flex-1 py-3 rounded-xl text-slate-400 font-bold transition-all">المشرفين</button>
         </div>
 
-        <div
-            class="admin-glass p-8 md:p-12 shadow-2xl rounded-[2.5rem] border border-white/5 bg-[#111]/40 backdrop-blur-xl">
+        <div class="admin-glass p-8 md:p-10 shadow-2xl">
             <header class="text-center mb-8">
-                <h1 id="adminTitle" class="text-3xl font-bold text-white">بث آية اليوم</h1>
-                <div id="liveIndicator" class="flex items-center justify-center gap-2 mt-2 text-teal-500">
-                    <span class="text-xs uppercase tracking-widest opacity-60">مباشر الآن:</span>
-                    <span id="liveVerse" class="font-bold">-:-</span>
+                <h1 id="adminTitle" class="text-2xl font-bold text-white">بث آية اليوم</h1>
+                <div id="liveIndicator"
+                    class="flex items-center justify-center gap-2 mt-3 bg-teal-500/5 py-2 px-4 rounded-full border border-teal-500/10 inline-flex mx-auto">
+                    <span class="text-xs uppercase tracking-widest text-teal-500 font-bold">مباشر الآن:</span>
+                    <span id="liveDisplay" class="text-white font-bold text-sm">-:-</span>
                 </div>
             </header>
 
-            <div class="space-y-4 relative">
+            <div class="space-y-6">
                 <div id="quranInputArea" class="relative">
-                    <input type="text" id="newVerseKey" oninput="unifiedAdminLogic()"
-                        placeholder="اسم السورة أو الرقم (مثلاً: الكهف)" class="admin-input-premium" autocomplete="off">
+                    <label class="text-teal-400 text-xs font-bold block mb-2 px-1 uppercase opacity-70">اختر السورة
+                        والآية</label>
+                    <input type="text" id="newVerseKey" oninput="unifiedAdminLogic()" placeholder="مثال: الكهف أو 18:10"
+                        class="admin-input-premium" autocomplete="off">
                     <div id="adminSearchList"
-                        class="hidden absolute z-[100] w-full mt-2 bg-[#0f1a19] border border-teal-500/30 rounded-xl max-h-60 overflow-y-auto shadow-2xl">
+                        class="hidden absolute z-[100] w-full mt-2 bg-[#0f1a19] border border-teal-500/30 rounded-xl max-h-60 overflow-y-auto shadow-2xl custom-scrollbar">
                     </div>
                 </div>
 
                 <div id="hadithInputArea" class="hidden space-y-4">
-                    <div class="flex items-center justify-center gap-2 mb-2 text-teal-500">
-                        <span class="text-xs uppercase tracking-widest opacity-60">الحديث المباشر:</span>
-                        <span id="liveHadith" class="font-bold">...</span>
-                    </div>
+                    <label class="text-teal-400 text-xs font-bold block mb-2 px-1 uppercase opacity-70">تفاصيل الحديث
+                        الشريف</label>
                     <div class="grid grid-cols-2 gap-4">
                         <select id="hadithBookSelect" class="admin-input-premium text-sm">
                             <option value="ara-bukhari">صحيح البخاري</option>
                             <option value="ara-muslim">صحيح مسلم</option>
+                            <option value="ara-abudawud">سنن أبي داود</option>
                         </select>
-                        <input type="number" id="hadithNumberInput" placeholder="رقم الحديث"
-                            class="admin-input-premium text-sm">
+                        <input type="number" id="hadithNumberInput" oninput="unifiedAdminLogic()"
+                            placeholder="رقم الحديث" class="admin-input-premium text-sm">
                     </div>
                 </div>
 
                 <div id="rolesInputArea" class="hidden space-y-6">
-                    <div class="space-y-4">
-                        <label
-                            class="text-teal-400 text-xs font-bold block px-1 uppercase tracking-widest opacity-70">إضافة
-                            مشرف جديد</label>
-
-                        <div class="flex flex-col gap-3">
-                            <input type="text" id="adminSearchInput" placeholder="البريد الإلكتروني أو المعرف (ID)"
-                                class="admin-input-premium text-center">
-
-                            <button onclick="assignAdminRole()"
-                                class="w-full py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2">
-                                <span>تعيين كمسؤول</span>
-                                <ion-icon name="person-add-outline"></ion-icon>
-                            </button>
-                        </div>
+                    <div class="space-y-3">
+                        <input type="text" id="adminSearchInput" placeholder="البريد الإلكتروني للمسؤول الجديد"
+                            class="admin-input-premium text-center">
+                        <button onclick="assignAdminRole()"
+                            class="w-full py-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all flex items-center justify-center gap-2">
+                            <span>تعيين كمسؤول</span>
+                            <ion-icon name="person-add-outline"></ion-icon>
+                        </button>
                     </div>
-
                     <div class="border-t border-white/5 pt-6">
                         <label
-                            class="text-teal-400 text-xs font-bold block px-1 mb-4 uppercase tracking-widest opacity-70">قائمة
-                            المسؤولين الحالية</label>
-                        <div id="adminList" class="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                        </div>
+                            class="text-teal-400 text-[10px] block mb-4 uppercase tracking-[0.2em] font-black opacity-50">قائمة
+                            المسؤولين</label>
+                        <div id="adminList" class="space-y-3 max-h-60 overflow-y-auto custom-scrollbar"></div>
                     </div>
                 </div>
 
                 <div id="previewCard"
-                    class="hidden mt-6 p-6 rounded-2xl border border-teal-500/30 bg-teal-500/5 transition-all">
+                    class="hidden mt-8 p-6 rounded-2xl border border-teal-500/20 bg-teal-500/5 animate-in fade-in duration-500">
                     <div class="flex justify-between items-center mb-4">
-                        <span id="previewName" class="text-teal-400 font-bold"></span>
-                        <span id="previewBadge"
-                            class="text-[10px] bg-teal-500/20 px-2 py-1 rounded text-teal-300">مراجعة</span>
+                        <span id="previewName" class="text-teal-400 text-sm font-bold"></span>
+                        <span
+                            class="text-[9px] bg-teal-500/20 px-2 py-1 rounded text-teal-300 uppercase tracking-tighter">مراجعة
+                            المحتوى</span>
                     </div>
-                    <p id="previewText" class="text-white text-xl text-center font-['Amiri'] leading-relaxed mb-6"></p>
+                    <p id="previewText"
+                        class="text-white text-xl text-center leading-relaxed mb-6 font-['Amiri_Quran']"></p>
 
-                    <div class="mt-4 space-y-2">
-                        <label class="text-teal-400 text-xs font-bold block px-1">الدرس المستفاد أو التأمل:</label>
-                        <textarea id="verseNote" class="admin-input-premium text-right h-32 resize-none text-sm"
-                            placeholder="اكتب الهدايات هنا..."></textarea>
+                    <div class="space-y-2">
+                        <label class="text-teal-400 text-xs font-bold block px-1">الهدايات والتأملات:</label>
+                        <textarea id="contentNote" class="admin-input-premium text-right h-32 resize-none text-sm"
+                            placeholder="اكتب الدروس المستفادة هنا..."></textarea>
                     </div>
 
                     <button onclick="handlePrimaryAction()" id="updateBtn" class="admin-push-btn mt-6">
                         <span id="btnText">تأكيد وبث التحديث</span>
-                        <ion-icon name="paper-plane-outline" class="mr-2"></ion-icon>
+                        <ion-icon name="paper-plane-outline"></ion-icon>
                     </button>
                 </div>
 
-                <div id="statusMsg" class="h-4 text-center text-xs mt-4"></div>
+                <div id="statusMsg" class="h-4 text-center text-xs mt-4 transition-all duration-300"></div>
             </div>
         </div>
     </main>
@@ -167,7 +230,7 @@
 
             <div class="p-2 grid grid-cols-3 gap-1.5 bg-[#162927]/30 border-b border-teal-800/30">
 
-                <button onclick="closeIndex(); window.scrollTo({top: 0, behavior: 'smooth'});"
+                <button onclick="location.href='/index.html'"
                     class="flex flex-col items-center justify-center py-2 bg-teal-900/40 rounded-lg border border-teal-700/30 hover:bg-teal-400/10 transition-all active:scale-95">
                     <ion-icon name="home-outline" class="text-teal-400 text-base mb-0.5"></ion-icon>
                     <div class="text-center leading-tight">
@@ -228,16 +291,12 @@
                 <input type="text" id="indexSearch" oninput="renderIndex()" placeholder="ابحث عن سورة..."
                     class="w-full bg-[#0f1a19] border border-teal-800 rounded-xl px-4 py-3 text-white focus:border-teal-400 outline-none">
             </div>
-
-            <div id="indexGrid"
-                class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 custom-scrollbar">
-            </div>
         </div>
     </div>
 
-    <script src="/build/js/api-filter.js"></script>
-    <script src="/build/js/admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/build/js/global.js"></script>
+    <script src="/build/js/admin.js"></script>
 
 </body>
 
