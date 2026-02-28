@@ -339,20 +339,18 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 async function installPWA() {
-    if (!deferredPrompt) return;
+    // Add this safety check
+    if (!deferredPrompt || typeof deferredPrompt.prompt !== 'function') {
+        console.log("Native prompt not ready yet. Please wait for the browser to trigger it.");
+        alert("المتصفح يجهز عملية التثبيت، يرجى المحاولة بعد قليل.");
+        return;
+    }
 
-    // Show the install prompt
     deferredPrompt.prompt();
-
-    // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-
-    // We've used the prompt, and can't use it again
     deferredPrompt = null;
     pwaBanner.classList.add('hidden');
 }
-
 function dismissPWA() {
     pwaBanner.classList.add('hidden');
     // Don't show it again for 7 days
