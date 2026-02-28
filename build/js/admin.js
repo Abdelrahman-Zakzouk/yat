@@ -1,6 +1,6 @@
 /**
  * Yatlo | Admin Panel - Unified Logic
- * Features: Authentication, Real-time Stats, Daily Verse/Hadith, and Admin Management
+ * Features: Security Heartbeat, Real-time Stats, Daily Verse/Hadith, and Role Management
  */
 
 // --- CONFIGURATION ---
@@ -12,12 +12,11 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let allSurahs = [];
 let selectedSurahId = null;
 let confirmedKey = null;
-let activeSearchIndex = -1;
-let adminMode = 'quran'; // 'quran' | 'hadith' | 'roles'
-let presenceChannel;
+let adminMode = 'quran';
+let adminCheckInterval = null;
 
 /**
- * 1. SECURITY & INITIALIZATION
+ * 1. SECURITY & HEARTBEAT
  */
 async function checkAdminAccess() {
     try {
@@ -28,6 +27,7 @@ async function checkAdminAccess() {
             return;
         }
 
+        // Check is_admin status in profiles table
         const { data: profile, error } = await sb
             .from('profiles')
             .select('is_admin')
@@ -35,33 +35,48 @@ async function checkAdminAccess() {
             .single();
 
         if (error || !profile?.is_admin) {
-            alert("⚠️ Unauthorized access.");
+            console.warn("Unauthorized access detected. Redirecting...");
+            stopHeartbeat(); // Stop the interval
             window.location.href = '/build/html/profile.html';
-        } else {
-            // Success: Reveal Admin UI
+            return;
+        }
+
+        // Success: If we haven't initialized yet, do it now
+        const adminContent = document.getElementById('adminContent');
+        if (adminContent && adminContent.classList.contains('hidden')) {
             const loginOverlay = document.getElementById('loginOverlay');
             if (loginOverlay) loginOverlay.style.display = 'none';
+            adminContent.classList.remove('hidden');
 
-            const adminContent = document.getElementById('adminContent');
-            if (adminContent) adminContent.classList.remove('hidden');
-
-            // Load Data & Start Real-time Streams
             fetchInitialData();
             initStatsTracking();
+            startHeartbeat(); // Start the periodic check
         }
     } catch (err) {
         console.error("Security Check Failed:", err);
     }
 }
 
+/**
+ * Periodically checks if the user is still an admin.
+ * If rights are revoked in the DB, this kicks them out instantly.
+ */
+function startHeartbeat() {
+    if (adminCheckInterval) return;
+    adminCheckInterval = setInterval(checkAdminAccess, 30000); // Check every 30 seconds
+}
+
+function stopHeartbeat() {
+    clearInterval(adminCheckInterval);
+    adminCheckInterval = null;
+}
+
 async function fetchInitialData() {
     try {
-        // Fetch Quran Chapters
         const res = await fetch('https://api.quran.com/api/v4/chapters?language=en');
         const data = await res.json();
         allSurahs = data.chapters;
 
-        // Fetch Live Configs
         const { data: configs, error } = await sb.from('site_config').select('*');
         if (error) throw error;
 
@@ -77,15 +92,17 @@ async function fetchInitialData() {
 }
 
 /**
- * 2. REAL-TIME STATS
+ * 2. REAL-TIME STATS (Listener)
  */
 async function initStatsTracking() {
-    presenceChannel = sb.channel('online-users');
+    // We listen to the channel managed by global.js
+    const presenceChannel = sb.channel('online-users');
 
     presenceChannel
         .on('presence', { event: 'sync' }, () => {
             const state = presenceChannel.presenceState();
             const count = Object.keys(state).length;
+
             const activeEl = document.getElementById('activeUsersCount');
             if (activeEl) activeEl.innerText = count;
         })
@@ -121,7 +138,6 @@ function switchAdminMode(mode) {
     const live = document.getElementById('liveIndicator');
     const card = document.getElementById('previewCard');
 
-    // Reset Tabs
     [qBtn, hBtn, rBtn].forEach(b => b?.classList.remove('bg-teal-600', 'text-white'));
     [qArea, hArea, rArea].forEach(a => a?.classList.add('hidden'));
 
@@ -130,19 +146,12 @@ function switchAdminMode(mode) {
         qArea?.classList.remove('hidden');
         title.innerText = "Broadcast Verse of the Day";
         if (live) live.style.display = "flex";
-    }
-    else if (mode === 'hadith') {
+    } else if (mode === 'hadith') {
         hBtn?.classList.add('bg-teal-600', 'text-white');
         hArea?.classList.remove('hidden');
         title.innerText = "Hadith Lessons";
         if (live) live.style.display = "none";
-
-        // Setup default UI for Hadith
-        document.getElementById('previewName').innerText = "Add Lesson to Hadith";
-        document.getElementById('previewText').innerText = "Enter Hadith info below to save lessons.";
-        card?.classList.remove('hidden');
-    }
-    else if (mode === 'roles') {
+    } else if (mode === 'roles') {
         rBtn?.classList.add('bg-teal-600', 'text-white');
         rArea?.classList.remove('hidden');
         title.innerText = "Admin Management";
@@ -153,7 +162,7 @@ function switchAdminMode(mode) {
 }
 
 /**
- * 4. QURAN SEARCH & BROADCAST
+ * 4. QURAN SEARCH & PREVIEW
  */
 async function unifiedAdminLogic() {
     if (adminMode !== 'quran') return;
@@ -161,8 +170,6 @@ async function unifiedAdminLogic() {
     const inputVal = inputField.value.trim().toLowerCase();
     const list = document.getElementById('adminSearchList');
     const card = document.getElementById('previewCard');
-
-    activeSearchIndex = -1;
 
     try {
         if (/^\d+:\d+$/.test(inputVal)) {
@@ -251,57 +258,36 @@ async function loadAdminList() {
 async function assignAdminRole() {
     const input = document.getElementById('adminSearchInput');
     const searchValue = input.value.trim();
-
     if (!searchValue) return showStatus("⚠️ Enter Email or User ID", "text-orange-400");
 
     try {
-        // Regex to check if the input is a valid UUID (User ID)
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(searchValue);
-
         let query = sb.from('profiles').update({ is_admin: true });
 
-        if (isUUID) {
-            query = query.eq('id', searchValue);
-        } else {
-            // Searching by email (case-insensitive)
-            query = query.ilike('email', searchValue);
-        }
+        if (isUUID) query = query.eq('id', searchValue);
+        else query = query.ilike('email', searchValue);
 
         const { data, error } = await query.select();
-
         if (error) throw error;
+        if (!data || data.length === 0) throw new Error("User not found.");
 
-        if (!data || data.length === 0) {
-            throw new Error("User not found. Ensure they have a profile.");
-        }
-
-        showStatus(`✅ Successfully promoted: ${data[0].email || 'User'}`, "text-teal-400");
+        showStatus(`✅ Promoted: ${data[0].email || 'User'}`, "text-teal-400");
         input.value = "";
-        loadAdminList(); // Refresh the list of admins
-    } catch (e) {
-        showStatus("❌ Error: " + e.message, "text-red-400");
-    }
+        loadAdminList();
+    } catch (e) { showStatus("❌ Error: " + e.message, "text-red-400"); }
 }
 
 async function removeAdminRole(userId) {
     const { data: { user } } = await sb.auth.getUser();
     if (user.id === userId) return alert("You cannot remove your own admin rights!");
-
     if (!confirm("Are you sure you want to remove this admin?")) return;
 
     try {
-        const { error } = await sb
-            .from('profiles')
-            .update({ is_admin: false })
-            .eq('id', userId);
-
+        const { error } = await sb.from('profiles').update({ is_admin: false }).eq('id', userId);
         if (error) throw error;
-
         showStatus("✅ Admin removed", "text-teal-400");
         loadAdminList();
-    } catch (e) {
-        showStatus("❌ Failed", "text-red-400");
-    }
+    } catch (e) { showStatus("❌ Failed", "text-red-400"); }
 }
 
 /**
@@ -323,10 +309,7 @@ async function updateDailyVerse() {
     try {
         await sb.from('site_config').update({ verse_key: confirmedKey }).eq('id', 'daily_verse');
         if (noteValue) {
-            await sb.from('verse_notes').upsert({
-                verse_key: confirmedKey,
-                note_text: noteValue
-            }, { onConflict: 'verse_key' });
+            await sb.from('verse_notes').upsert({ verse_key: confirmedKey, note_text: noteValue });
         }
         document.getElementById('liveVerse').innerText = confirmedKey;
         showStatus("✅ Verse Broadcasted!", "text-teal-400");
@@ -347,19 +330,12 @@ async function saveHadithNote() {
 
     try {
         await sb.from('site_config').update({ book_key: book, hadith_number: num }).eq('id', 'daily_hadith');
-        await sb.from('hadith_notes').upsert({
-            book_key: book,
-            hadith_id: num, // Ensure this matches your column name
-            note_text: note
-        });
+        await sb.from('hadith_notes').upsert({ book_key: book, hadith_id: num, note_text: note });
         document.getElementById('liveHadith').innerText = `${book} #${num}`;
         showStatus("✅ Hadith Note Saved!", "text-teal-400");
     } catch (err) { showStatus("❌ Error", "text-red-400"); }
 }
 
-/**
- * 7. UTILS
- */
 function resetForm() {
     document.getElementById('newVerseKey').value = "";
     document.getElementById('verseNote').value = "";
@@ -382,4 +358,5 @@ window.applySelection = applySelection;
 window.assignAdminRole = assignAdminRole;
 window.removeAdminRole = removeAdminRole;
 
+// Start Security Check
 checkAdminAccess();

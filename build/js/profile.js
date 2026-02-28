@@ -6,62 +6,70 @@ const ProfileManager = {
     user: null,
 
     async init() {
-        // 1. Get current user session
-        const { data: { user }, error: authError } = await HadithEngine.sb.auth.getUser();
-
-        if (authError || !user) {
-            window.location.href = '/build/html/auth.html?auth=required';
+        // SAFETY CHECK: Ensure the Supabase engine is loaded from hadiths.js
+        if (typeof HadithEngine === 'undefined' || !HadithEngine.sb) {
+            console.error("HadithEngine not found. Ensure hadiths.js is loaded before profile.js");
             return;
         }
 
-        this.user = user;
-
-        // 2. Fetch Profile Data (PFP + Admin Status)
         try {
-            const { data: profile } = await HadithEngine.sb
+            // 1. Get current user session
+            const { data: { user }, error: authError } = await HadithEngine.sb.auth.getUser();
+
+            if (authError || !user) {
+                window.location.href = '/build/html/auth.html?auth=required';
+                return;
+            }
+
+            this.user = user;
+
+            // 2. Fetch Profile Data (Using maybeSingle to prevent crash on new users)
+            const { data: profile, error: profileError } = await HadithEngine.sb
                 .from('profiles')
                 .select('avatar_url, is_admin')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
+
+            if (profileError) console.error("Profile Fetch Error:", profileError);
 
             // Handle Admin Button Visibility
-            if (profile?.is_admin) {
-                const adminBtn = document.getElementById('adminDashboardBtn');
-                if (adminBtn) adminBtn.classList.remove('hidden');
+            const adminBtn = document.getElementById('adminDashboardBtn');
+            if (profile?.is_admin && adminBtn) {
+                adminBtn.classList.remove('hidden');
             }
 
             // Priority: 1. DB Table, 2. Google Metadata, 3. Null
             const finalPfpUrl = profile?.avatar_url || user.user_metadata?.avatar_url;
             this.renderUserHeader(finalPfpUrl);
 
-        } catch (dbErr) {
-            console.error("Profile Fetch Error:", dbErr);
-            // Fallback to metadata if DB fetch fails
-            this.renderUserHeader(user.user_metadata?.avatar_url);
-        }
+            // 3. Load user specific content
+            this.loadFavorites();
 
-        this.loadFavorites();
+        } catch (err) {
+            console.error("Initialization Failed:", err);
+            showToast("⚠️ حدث خطأ أثناء تحميل البيانات");
+        }
     },
 
     renderUserHeader(pfpUrl) {
         const emailEl = document.getElementById('profileEmail');
-        const idEl = document.getElementById('profileId'); // New
+        const idEl = document.getElementById('profileId');
         const pfpImg = document.getElementById('userPfp');
         const defIcon = document.getElementById('defaultIcon');
 
         if (emailEl) emailEl.innerText = this.user.email;
-        if (idEl) idEl.innerText = `ID: ${this.user.id}`; // Set the ID here
+        if (idEl) idEl.innerText = `ID: ${this.user.id}`;
 
         if (pfpUrl && pfpImg) {
-            pfpImg.src = `${pfpUrl}?t=${new Date().getTime()}`;
+            pfpImg.src = pfpUrl.includes('?') ? pfpUrl : `${pfpUrl}?t=${new Date().getTime()}`;
             pfpImg.classList.remove('hidden');
             if (defIcon) defIcon.classList.add('hidden');
         } else if (defIcon) {
-            pfpImg.classList.add('hidden');
+            if (pfpImg) pfpImg.classList.add('hidden');
             defIcon.classList.remove('hidden');
         }
     },
-    // Add this inside the ProfileManager object
+
     async copyId() {
         if (!this.user) return;
         try {
@@ -74,9 +82,8 @@ const ProfileManager = {
 
     async uploadPfp(event) {
         const file = event.target.files[0];
-        if (!file) return;
+        if (!file || !this.user) return;
 
-        // Max 2MB check
         if (file.size > 2 * 1024 * 1024) {
             showToast("⚠️ حجم الصورة كبير جداً (الأقصى 2MB)");
             return;
@@ -88,19 +95,16 @@ const ProfileManager = {
         try {
             showToast("⏳ جاري رفع الصورة...");
 
-            // 1. Upload to Storage (Bucket: 'avatars')
             const { error: uploadError } = await HadithEngine.sb.storage
                 .from('avatars')
                 .upload(fileName, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
-            // 2. Get Public URL
             const { data: { publicUrl } } = HadithEngine.sb.storage
                 .from('avatars')
                 .getPublicUrl(fileName);
 
-            // 3. Update Database (Survives Google logout/login)
             const { error: dbError } = await HadithEngine.sb
                 .from('profiles')
                 .upsert({
@@ -124,6 +128,8 @@ const ProfileManager = {
         const container = document.getElementById('favoritesList');
         const countEl = document.getElementById('favCount');
         const statusEl = document.getElementById('listStatus');
+
+        if (!container) return;
 
         try {
             const { data: favs, error } = await HadithEngine.sb
@@ -153,15 +159,13 @@ const ProfileManager = {
                     <p class="quran-font text-xl text-right text-white/90 mb-4 leading-loose">
                         ${item.hadith_text || 'نص الحديث غير متوفر'}
                     </p>
-                    
                     <div class="flex justify-between items-center border-t border-white/5 pt-4">
                         <button onclick="ProfileManager.removeFavorite(${item.id})" 
                                 class="text-xs text-red-400/50 hover:text-red-400 transition-colors flex items-center gap-2">
                             <i class="fas fa-trash-alt"></i> حذف
                         </button>
-                        
                         <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                            ${HadithEngine.BOOKS[item.book_key] || item.book_key} | رقم ${item.hadith_number}
+                            ${(HadithEngine.BOOKS && HadithEngine.BOOKS[item.book_key]) || item.book_key} | رقم ${item.hadith_number}
                         </div>
                     </div>
                 </div>
@@ -193,7 +197,7 @@ const ProfileManager = {
     }
 };
 
-// Logout Handler
+// Global Handlers
 window.handleLogout = async () => {
     const { error } = await HadithEngine.sb.auth.signOut();
     if (!error) window.location.href = '/index.html';
@@ -205,8 +209,10 @@ function showToast(m) {
     if (!t || !msgEl) return;
     msgEl.innerText = m;
     t.classList.replace('opacity-0', 'opacity-100');
+    t.style.pointerEvents = 'auto';
     setTimeout(() => {
         t.classList.replace('opacity-100', 'opacity-0');
+        t.style.pointerEvents = 'none';
     }, 3000);
 }
 

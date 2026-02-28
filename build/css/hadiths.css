@@ -1,110 +1,191 @@
-/* --- Global Styles --- */
+/**
+ * Yatlo | يتلو - Full Stylesheet
+ * Theme: Islamic/Modern Dark Teal
+ */
+
+:root {
+    --primary-teal: #2dd4bf;
+    --dark-bg: #0f1a19;
+    --card-bg: #1a2e2c;
+    --accent-emerald: #34d399;
+    --glass-border: rgba(45, 212, 191, 0.15);
+    --transition-speed: 0.4s;
+}
+
+/* 1. Base Styles & Resets */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    background: radial-gradient(circle at top right, #1a2e2c, #0b1413);
-    background-attachment: fixed;
-    color: #e2e8f0;
     font-family: 'Amiri', serif;
+    background-color: var(--dark-bg);
+    color: #cbd5e1;
     overflow-x: hidden;
+    line-height: 1.6;
 }
 
-#shareCanvas {
-    display: none !important;
-    /* Prevents the large image below hadith issue */
+/* 2. Typography Enhancements */
+.rakkas {
+    font-family: 'Rakkas', serif;
 }
 
-/* --- Typography --- */
-.quran-font {
-    font-family: "Amiri Quran", "Amiri", serif;
-    line-height: 2.2 !important;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    text-align: center;
+.hadith-text {
+    line-height: 2.2;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    font-size: 1.5rem;
+    transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- Modals --- */
+@media (min-width: 768px) {
+    .hadith-text {
+        font-size: 2.25rem;
+    }
+}
+
+/* 3. Glassmorphism & UI Layers */
+.glass-effect {
+    background: rgba(26, 46, 44, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* 4. Interactive Components */
+#toggleBg {
+    box-shadow: 0 4px 20px rgba(45, 212, 191, 0.4);
+    transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232dd4bf'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 1rem center;
+    background-size: 1.2rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+select:focus {
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+/* 5. Smooth Animations */
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toastIn {
+    0% {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+/* 6. Modal Transitions */
 #shareModal,
 #indexModal {
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s;
 }
 
-#shareModal.active,
-#indexModal.active {
-    opacity: 1 !important;
+#shareModal.flex,
+#indexModal.flex {
+    animation: fadeIn 0.3s ease-out;
 }
 
 #shareModal>div,
 #indexModal>div {
-    transform: scale(0.9);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-#shareModal.active>div,
-#indexModal.active>div {
-    transform: scale(1);
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
-/* --- Utilities --- */
-.hadith-display-area {
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* 7. Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
 }
 
-#toast {
-    transition: all 0.4s ease;
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
 }
 
-#hadithNotePanel {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 2rem auto;
-    width: 100%;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, transparent, var(--primary-teal), transparent);
+    border-radius: 10px;
 }
 
-
-/* 2. The Card - Solid Match + Wide Layout */
-.lesson-container {
-    width: 100%;
-    max-width: 1000px;
-    /* Expands to match main section width */
-    margin: 0 auto;
-    padding: 2.5rem 3rem;
-
-    /* Mimic Verse BG: Solid deep matte, no gradient */
-    background-color: #1a2422;
-
-    /* Visual styling and Rounding */
-    border-radius: 20px;
-    border: 1px solid rgba(45, 212, 191, 0.2);
-    border-right: 8px solid #2dd4bf;
-    /* Teal accent line */
-
-    /* Fix: Clips content to rounded edges */
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+/* 8. Toast Feedback Animation */
+#toast.opacity-100 {
+    animation: toastIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.lesson-title {
-    font-family: 'Rakkas', serif;
-    color: #2dd4bf;
-    font-size: 1.6rem;
-    margin-bottom: 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    direction: rtl;
+/* 9. Card Hover Effects */
+.nav-card {
+    transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.lesson-text {
-    font-family: 'Amiri', serif;
-    line-height: 2.2;
-    color: #e2e8f0;
-    font-size: 1.35rem;
-    text-align: right;
-    direction: rtl;
+.nav-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-teal);
+    background: rgba(45, 212, 191, 0.1);
+}
+
+/* 10. Hide Elements */
+.hidden {
+    display: none !important;
+}
+
+#shareCanvas {
+    display: none;
+}
+
+/* Closing Animation */
+@keyframes fadeOutSlideDown {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+}
+
+.modal-closing {
+    animation: fadeOutSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.overlay-closing {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
 }

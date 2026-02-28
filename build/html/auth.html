@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="flex items-center justify-center p-6">
+<body class="flex items-center justify-center p-6 bg-[#0b1413]">
 
     <div class="w-full max-w-md">
         <div class="text-center mb-8">
@@ -23,7 +23,7 @@
             <p id="authSubtitle" class="text-slate-400 mt-2">قم بتسجيل الدخول لمتابعة حفظ أحاديثك</p>
         </div>
 
-        <div class="glass-card rounded-[2.5rem] p-8 shadow-2xl">
+        <div class="glass-card rounded-[2.5rem] p-8 shadow-2xl bg-white/5 border border-white/10">
             <form id="authForm" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-teal-500 uppercase tracking-widest mb-2 px-1">البريد
@@ -40,6 +40,13 @@
                         placeholder="••••••••">
                 </div>
 
+                <div class="text-left px-1">
+                    <button type="button" onclick="AuthUI.handleForgotPassword()"
+                        class="text-xs text-teal-500 hover:text-teal-400 underline transition-all">
+                        نسيت كلمة المرور؟
+                    </button>
+                </div>
+
                 <button type="submit" id="submitBtn"
                     class="w-full bg-teal-500 hover:bg-teal-400 text-[#0b1413] font-bold py-4 rounded-2xl transition-all mt-4 flex items-center justify-center gap-2">
                     <span>تسجيل الدخول</span>
@@ -51,32 +58,36 @@
                 <p id="toggleText" class="text-slate-400 text-sm">ليس لديك حساب؟</p>
                 <button id="toggleBtn" class="text-teal-400 font-bold mt-1 hover:underline">إنشاء حساب جديد</button>
             </div>
+
             <div class="relative my-8">
                 <div class="absolute inset-0 flex items-center">
                     <div class="w-full border-t border-white/10"></div>
                 </div>
-                <div class="relative flex justify-center text-xs uppercase"><span
-                        class="bg-[#122321] px-4 text-slate-500 font-bold tracking-widest">أو عبر المنصات</span></div>
+                <div class="relative flex justify-center text-xs uppercase">
+                    <span class="bg-[#0b1413] px-4 text-slate-500 font-bold tracking-widest">أو عبر المنصات</span>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4">
-                <button onclick="AuthUI.signInWithProvider('google')"
-                    class="flex items-center justify-center gap-3 bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"
-                        alt="Google">
-                    <span class="text-sm font-bold">جوجل</span>
-                </button>
-            </div>
+            <button type="button" onclick="AuthUI.signInWithProvider('google')"
+                class="flex items-center justify-center gap-3 bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all w-full">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5" alt="Google">
+                <span class="text-sm font-bold text-white">جوجل</span>
+            </button>
         </div>
     </div>
 
     <div id="toast"
-        class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-teal-600 text-white rounded-full text-sm font-bold shadow-2xl opacity-0 transition-all pointer-events-none">
+        class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-teal-600 text-white rounded-full text-sm font-bold shadow-2xl opacity-0 transition-all pointer-events-none z-50">
         <span id="toastMessage"></span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script src="/build/js/hadiths.js"></script>
+
     <script src="/build/js/auth.js"></script>
+    <script src="/build/js/global.js"></script>
+
 </body>
 
 </html>

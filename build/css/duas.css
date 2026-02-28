@@ -1,0 +1,170 @@
+/**
+ * Yatlo Duas Style Sheet - Pure CSS Version
+ * (No @apply needed)
+ */
+
+/* 1. Category Bar Layout */
+.category-bar-wrapper {
+    background-color: rgba(22, 41, 39, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 4px;
+    border-radius: 9999px;
+    border: 1px solid rgba(20, 184, 166, 0.2);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+    max-width: 32rem;
+    /* lg: 512px */
+    height: 3.5rem;
+    /* 56px */
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* 2. The Sliding Pill Logic */
+#activePill {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    right: 4px;
+    /* Starting position in RTL */
+    width: calc(25% - 4px);
+    background-color: #0d9488;
+    /* teal-600 */
+    border-radius: 9999px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    z-index: 5;
+    /* Behind text */
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* 3. Category Buttons */
+.dua-btn {
+    position: relative;
+    z-index: 10;
+    /* Above pill */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    transition: color 0.5s ease;
+    color: #94a3b8;
+    /* slate-400 */
+    font-size: 14px;
+}
+
+.dua-btn.active {
+    color: #ffffff;
+}
+
+/* 4. Luxury Dua Cards */
+.dua-card {
+    position: relative;
+    background: linear-gradient(to bottom, #1a2e2c, #162927);
+    border: 1px solid rgba(20, 184, 166, 0.15);
+    border-radius: 2rem;
+    padding: 2.5rem;
+    transition: all 0.7s ease;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.dua-card.completed {
+    opacity: 0.3;
+    transform: scale(0.97);
+    filter: grayscale(0.8);
+}
+
+.dua-text {
+    font-family: 'Amiri Quran', serif;
+    font-size: 1.875rem;
+    /* text-3xl */
+    line-height: 1.8;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 5. Interactive Elements */
+.misbaha-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: rgba(20, 184, 166, 0.1);
+    color: #2dd4bf;
+    /* teal-400 */
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(45, 212, 191, 0.2);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.misbaha-btn:active {
+    transform: scale(0.9);
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 4px;
+    background-color: #2dd4bf;
+    transition: width 0.5s ease;
+}
+
+/* 6. Loader & Toast */
+.loader-spinner {
+    display: inline-block;
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid rgba(20, 184, 166, 0.2);
+    border-top-color: #14b8a6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.toast-notification {
+    position: fixed;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #0d9488;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 9999px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Responsive Font for Buttons */
+@media (max-width: 768px) {
+    .dua-btn {
+        font-size: 11px;
+    }
+
+    .dua-text {
+        font-size: 1.5rem;
+    }
+}

@@ -166,29 +166,21 @@
         <img id="previewImage" class="w-full rounded-2xl shadow-lg border border-white/5" alt="Verse Preview">
       </div>
 
-      <div class="p-6 grid grid-cols-3 gap-4">
+      <div class="p-6 grid grid-cols-2 gap-4">
+        <button onclick="nativeShare()" class="flex flex-col items-center gap-2 group">
+          <div
+            class="w-14 h-14 rounded-full bg-teal-500/10 flex items-center justify-center group-hover:bg-teal-500/20 transition-all border border-teal-500/20">
+            <ion-icon name="share-social-outline" class="text-2xl text-teal-400"></ion-icon>
+          </div>
+          <span class="text-[10px] text-teal-500 font-bold uppercase tracking-widest">مشاركة</span>
+        </button>
+
         <button onclick="copyImageToClipboard()" class="flex flex-col items-center gap-2 group">
           <div
-            class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-teal-500/20 transition-all">
-            <ion-icon name="copy-outline" class="text-xl text-teal-400"></ion-icon>
+            class="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all border border-white/10">
+            <ion-icon name="copy-outline" class="text-2xl text-gray-300"></ion-icon>
           </div>
-          <span class="text-[10px] text-gray-400 uppercase tracking-widest">Copy</span>
-        </button>
-
-        <button onclick="shareTo('whatsapp')" class="flex flex-col items-center gap-2 group">
-          <div
-            class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-green-500/20 transition-all">
-            <ion-icon name="logo-whatsapp" class="text-xl text-green-400"></ion-icon>
-          </div>
-          <span class="text-[10px] text-gray-400 uppercase tracking-widest">WhatsApp</span>
-        </button>
-
-        <button onclick="shareTo('facebook')" class="flex flex-col items-center gap-2 group">
-          <div
-            class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-500/20 transition-all">
-            <ion-icon name="logo-facebook" class="text-xl text-blue-400"></ion-icon>
-          </div>
-          <span class="text-[10px] text-gray-400 uppercase tracking-widest">Facebook</span>
+          <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">نسخ</span>
         </button>
       </div>
 
@@ -289,6 +281,9 @@
   <canvas id="shareCanvas"></canvas>
   <script src="/build/js/api-filter.js"></script>
   <script src="/build/js/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/build/js/global.js"></script>
+
 </body>
 
 </html>
