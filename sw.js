@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Bayan-cache-v2';
+const CACHE_NAME = 'Bayani-cache-v2';
 
 // 1. Files to cache immediately on install
 const PRE_CACHE = [

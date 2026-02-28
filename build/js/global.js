@@ -1,5 +1,5 @@
 /**
- * Bayan | Global Logic & Analytics
+ * Bayani | Global Logic & Analytics
  * Handles: Supabase Init, Unique Visit Tracking, Real-time Presence, and UI Helpers.
  */
 
@@ -72,7 +72,7 @@ window.HadithEngine.BOOKS = {
     'ara-muslim': 'صحيح مسلم',
 };
 
-const BayanGlobal = {
+const BayaniGlobal = {
     sb: window.sb,
     presenceChannel: null,
 
@@ -87,7 +87,7 @@ const BayanGlobal = {
             // ... your other init logic (trackVisit, etc) ...
 
             this.initPresence(); // Start the live tracker
-            console.log("🌙 Bayan Global: Online");
+            console.log("🌙 Bayani Global: Online");
         } catch (e) { console.error("Init Error:", e); }
     },
 
@@ -204,7 +204,7 @@ async function syncKhatmaCacheWithServer() {
                 mode: 'wird'
             };
             console.log('[Global] syncing khatma cache with server', journey);
-            localStorage.setItem('Bayan_khatma_cache', JSON.stringify(journey));
+            localStorage.setItem('Bayani_khatma_cache', JSON.stringify(journey));
         }
     } catch (e) {
         console.warn('syncKhatmaCacheWithServer failed', e);
@@ -309,7 +309,7 @@ async function checkActiveKhatma() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Bayan PWA Active'))
+            .then(reg => console.log('Bayani PWA Active'))
             .catch(err => console.log('PWA Setup Failed', err));
     });
 }
@@ -365,5 +365,5 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 
 // AUTO-BOOTSTRAP
 document.addEventListener('DOMContentLoaded', () => {
-    BayanGlobal.init();
+    BayaniGlobal.init();
 });

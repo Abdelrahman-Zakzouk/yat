@@ -1,5 +1,5 @@
 /**
- * بيان | Bayan Authentication Logic
+ * بياني | Bayani Authentication Logic
  * Supports: Email/Password, Google OAuth, and Password Reset
  */
 
@@ -153,7 +153,7 @@ const AuthUI = {
 
     translateError(msg) {
         const errors = {
-            "Invalid login credentials": "بيانات الدخول غير صحيحة",
+            "Invalid login credentials": "بيانيات الدخول غير صحيحة",
             "User already registered": "هذا البريد مسجل مسبقاً",
             "Password should be at least 6 characters": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
             "provider is not enabled": "هذه الوسيلة غير مفعلة حالياً"

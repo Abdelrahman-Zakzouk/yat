@@ -1,5 +1,5 @@
 /**
- * Bayan | بيان - Unified Hadith Engine
+ * Bayani | بياني - Unified Hadith Engine
  */
 const HadithApp = {
     API: "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/",
@@ -263,7 +263,7 @@ async function shareAsImage() {
 
     ctx.fillStyle = '#2dd4bf';
     ctx.font = '30px "Rakkas", serif';
-    ctx.fillText('تطبيق بيان | Bayan Hadith', 540, 1030);
+    ctx.fillText('تطبيق بياني | Bayani Hadith', 540, 1030);
 
     document.getElementById('previewImage').src = canvas.toDataURL();
     toggleModal('shareModal', true);
@@ -271,7 +271,7 @@ async function shareAsImage() {
 
 function copyToClipboard() {
     if (!HadithApp.current) return;
-    const msg = `﴿ حديث شريف ﴾\n\n${HadithApp.current.text}\n\nالمصدر: ${HadithApp.current.book}\nعبر تطبيق بيان`;
+    const msg = `﴿ حديث شريف ﴾\n\n${HadithApp.current.text}\n\nالمصدر: ${HadithApp.current.book}\nعبر تطبيق بياني`;
     navigator.clipboard.writeText(msg).then(() => showToast("✅ تم نسخ نص الحديث"));
 }
 

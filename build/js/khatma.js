@@ -1,12 +1,12 @@
 /**
- * Bayan - Khatma Engine & Reader
+ * Bayani - Khatma Engine & Reader
  * Consolidated Version: Corrected RTL Swiping, Multi-Khatma, Streak Protection, 
  * Bookmark Fix, Juz' Logic, and Transcribed Surah Names.
  */
 
 
 
-class BayanKhatma {
+class BayaniKhatma {
     constructor() {
         this.state = {
             journey: null,
@@ -14,7 +14,7 @@ class BayanKhatma {
             streak: 0,
             lastStreakDate: null,
             freezes: 0,
-            lang: localStorage.getItem('Bayan_lang') || 'ar'
+            lang: localStorage.getItem('Bayani_lang') || 'ar'
         };
 
         // Comprehensive Juz' start pages for dynamic lookup
@@ -31,7 +31,7 @@ class BayanKhatma {
         console.log('[Khatma] init() starting; current state:', this.state);
 
         // 1. Load Journey Cache
-        const localData = localStorage.getItem('Bayan_khatma_cache');
+        const localData = localStorage.getItem('Bayani_khatma_cache');
         if (localData) {
             this.state.journey = JSON.parse(localData);
             console.log('[Khatma] loaded journey from localStorage', this.state.journey);
@@ -42,14 +42,14 @@ class BayanKhatma {
         }
 
         // 2. Load Free Mode Progress
-        const savedFree = localStorage.getItem('Bayan_free_page');
+        const savedFree = localStorage.getItem('Bayani_free_page');
         if (savedFree) {
             this.state.freePage = parseInt(savedFree);
             console.log('[Khatma] loaded freePage from localStorage', this.state.freePage);
         }
 
         // 3. Load Streak & Freeze Protection
-        const savedStreak = localStorage.getItem('Bayan_streak_data');
+        const savedStreak = localStorage.getItem('Bayani_streak_data');
         if (savedStreak) {
             const data = JSON.parse(savedStreak);
             this.state.streak = data.streak || 0;
@@ -161,7 +161,7 @@ class BayanKhatma {
     }
 
     saveStreak() {
-        localStorage.setItem('Bayan_streak_data', JSON.stringify({
+        localStorage.setItem('Bayani_streak_data', JSON.stringify({
             streak: this.state.streak,
             lastDate: this.state.lastStreakDate,
             freezes: this.state.freezes
@@ -195,7 +195,7 @@ class BayanKhatma {
         let normalizedPage = Math.min(604, Math.max(1, pageNum));
         if (isFreeMode) {
             this.state.freePage = normalizedPage;
-            localStorage.setItem('Bayan_free_page', this.state.freePage);
+            localStorage.setItem('Bayani_free_page', this.state.freePage);
         } else {
             if (!this.state.journey) return;
             this.state.journey.current_page = normalizedPage;
@@ -205,7 +205,7 @@ class BayanKhatma {
     }
 
     save() {
-        localStorage.setItem('Bayan_khatma_cache', JSON.stringify(this.state.journey));
+        localStorage.setItem('Bayani_khatma_cache', JSON.stringify(this.state.journey));
         this.persistProgress();
     }
 
@@ -242,7 +242,7 @@ class BayanKhatma {
                 end_date: data.end_date || data.start_date || new Date().toISOString(),
                 mode: 'wird'
             };
-            localStorage.setItem('Bayan_khatma_cache', JSON.stringify(this.state.journey));
+            localStorage.setItem('Bayani_khatma_cache', JSON.stringify(this.state.journey));
             this.updateUI();
             return data;
         } catch (e) {
@@ -594,7 +594,7 @@ const Reader = {
     }
 };
 
-const engine = new BayanKhatma();
+const engine = new BayaniKhatma();
 
 // Event Listeners with Swiping Logic
 document.addEventListener('DOMContentLoaded', () => {

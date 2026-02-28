@@ -1,5 +1,5 @@
 /**
- * Bayan Duas Engine - Final Fixed RTL Version
+ * Bayani Duas Engine - Final Fixed RTL Version
  */
 
 const DuaEngine = {
@@ -46,7 +46,7 @@ const DuaEngine = {
             if (cleanData.length > 0) {
                 this.render(cleanData);
             } else {
-                container.innerHTML = `<p class="text-center py-20 text-slate-500 font-['Amiri']">لا توجد بيانات حالياً لهذا القسم.</p>`;
+                container.innerHTML = `<p class="text-center py-20 text-slate-500 font-['Amiri']">لا توجد بيانيات حالياً لهذا القسم.</p>`;
             }
 
         } catch (error) {

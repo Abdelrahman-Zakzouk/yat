@@ -1,5 +1,5 @@
 /**
- * Bayan | Admin Panel - Unified Logic
+ * Bayani | Admin Panel - Unified Logic
  * Features: Security Heartbeat, Real-time Stats, Daily Verse/Hadith, and Role Management
  */
 

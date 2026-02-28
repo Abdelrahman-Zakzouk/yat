@@ -1,5 +1,5 @@
 /**
- * بيان | Bayan Profile Logic 
+ * بياني | Bayani Profile Logic 
  */
 
 const ProfileManager = {
@@ -49,7 +49,7 @@ const ProfileManager = {
 
         } catch (err) {
             console.error("Initialization Failed:", err);
-            showToast("⚠️ حدث خطأ أثناء تحميل البيانات");
+            showToast("⚠️ حدث خطأ أثناء تحميل البيانيات");
         }
     },
 
