@@ -349,7 +349,7 @@ async function updateDailyVerse() {
     const note = document.getElementById('contentNote').value.trim();
     try {
         const client = await ensureSb();
-        await client.from('site_config').upsert({ verse_key: confirmedKey }).eq('id', 'daily_verse');
+        await client.from('site_config').update({ verse_key: confirmedKey }).eq('id', 'daily_verse');
         if (note) {
             await client.from('verse_notes').upsert({
                 verse_key: confirmedKey,
@@ -371,35 +371,30 @@ async function saveHadithNote() {
     try {
         const client = await ensureSb();
 
-        // 1. Update live broadcast config (site_config)
+        // 1. Update Global Site Config
         const { error: configError } = await client
             .from('site_config')
-            .upsert({
-                book_key: book,
-                hadith_number: num
-            })
+            .update({ book_key: book, hadith_number: num })
             .eq('id', 'daily_hadith');
 
         if (configError) throw configError;
 
-        // 2. Update the lesson notes (hadith_notes)
-        // We use 'hadith_number' now, NOT 'hadith_id'
+        // 2. Update Specific Hadith Lesson Notes
         if (note) {
             const { error: noteError } = await client
                 .from('hadith_notes')
                 .upsert({
                     book_key: book,
-                    hadith_number: num,
+                    hadith_id: num.toString(), // Ensure consistent typing
                     note_text: note
-                }, { onConflict: 'book_key,hadith_number' });
-
+                }, { onConflict: 'book_key,hadith_id' });
             if (noteError) throw noteError;
         }
 
-        showStatus("✅ Successfully Pushed!", "text-teal-400");
+        showStatus("✅ Hadith Updated!", "text-teal-400");
         fetchInitialData();
     } catch (err) {
-        console.error("Database Error:", err);
+        console.error("Save Error Details:", err);
         showStatus(`❌ Error: ${err.message}`, "text-red-400");
     }
 }
