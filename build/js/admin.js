@@ -111,7 +111,7 @@ function updateLiveDisplay(verse, hadith) {
     if (adminMode === 'quran' && verse) {
         displayEl.innerText = verse.verse_key || '-:-';
     } else if (adminMode === 'hadith' && hadith) {
-        displayEl.innerText = `${hadith.book_key?.split('-')[1] || 'Hadith'} #${hadith.hadith_number}`;
+        displayEl.innerText = `حديث #${hadith.hadith_number}`;
     }
 }
 
@@ -169,17 +169,17 @@ function switchAdminMode(mode) {
     if (mode === 'quran') {
         qBtn?.classList.add('bg-teal-600', 'text-white');
         qArea?.classList.remove('hidden');
-        document.getElementById('adminTitle').innerText = "Broadcast Verse of the Day";
+        document.getElementById('adminTitle').innerText = "بث آية اليوم";
         liveIndicator?.classList.remove('hidden');
     } else if (mode === 'hadith') {
         hBtn?.classList.add('bg-teal-600', 'text-white');
         hArea?.classList.remove('hidden');
-        document.getElementById('adminTitle').innerText = "Hadith Lessons";
+        document.getElementById('adminTitle').innerText = "بث حديث اليوم";
         liveIndicator?.classList.remove('hidden');
     } else if (mode === 'roles') {
         rBtn?.classList.add('bg-teal-600', 'text-white');
         rArea?.classList.remove('hidden');
-        document.getElementById('adminTitle').innerText = "Admin Management";
+        document.getElementById('adminTitle').innerText = "إدارة المشرفين";
         liveIndicator?.classList.add('hidden');
         previewCard?.classList.add('hidden');
         loadAdminList();
@@ -356,7 +356,7 @@ async function updateDailyVerse() {
                 note_text: note
             }, { onConflict: 'verse_key' });
         }
-        showStatus("✅ Verse Broadcasted!", "text-teal-400");
+        showStatus("✅ تم البث بنجاح", "text-teal-400");
         fetchInitialData();
     } catch (err) { showStatus("❌ Error", "text-red-400"); }
 }

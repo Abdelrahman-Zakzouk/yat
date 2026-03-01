@@ -315,45 +315,50 @@ if ('serviceWorker' in navigator) {
 }
 
 // Custom Install Prompt logic
+// 1. Declare the variable but don't assign the DOM element yet
 let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    // You can now show a "Download App" button in your UI
-    console.log("App is ready to be installed");
-});
-
-const pwaBanner = document.getElementById('pwa-banner');
 
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    // Prevent the default browser mini-infobar from appearing
     e.preventDefault();
     // Stash the event so it can be triggered later.
     deferredPrompt = e;
 
-    // Check if the user has dismissed it recently
-    if (!localStorage.getItem('pwa-dismissed')) {
+    console.log("App is ready to be installed");
+
+    // 2. NOW find the element and show it safely
+    const pwaBanner = document.getElementById('pwa-banner');
+    if (pwaBanner && !localStorage.getItem('pwa-dismissed')) {
         pwaBanner.classList.remove('hidden');
         pwaBanner.classList.add('flex', 'animate-bounce-subtle');
     }
 });
 
 async function installPWA() {
-    // Add this safety check
-    if (!deferredPrompt || typeof deferredPrompt.prompt !== 'function') {
-        console.log("Native prompt not ready yet. Please wait for the browser to trigger it.");
-        alert("المتصفح يجهز عملية التثبيت، يرجى المحاولة بعد قليل.");
+    const pwaBanner = document.getElementById('pwa-banner'); // Find it when needed
+
+    if (!deferredPrompt) {
+        console.log("Install prompt not available.");
         return;
     }
 
+    // Show the native prompt
     deferredPrompt.prompt();
+
+    // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to install prompt: ${outcome}`);
+
+    // We've used the prompt, and can't use it again
     deferredPrompt = null;
-    pwaBanner.classList.add('hidden');
+
+    if (pwaBanner) pwaBanner.classList.add('hidden');
 }
+
 function dismissPWA() {
-    pwaBanner.classList.add('hidden');
-    // Don't show it again for 7 days
+    const pwaBanner = document.getElementById('pwa-banner');
+    if (pwaBanner) pwaBanner.classList.add('hidden');
+    // Don't show it again for 7 days (Logic: Date.now() is truthy)
     localStorage.setItem('pwa-dismissed', Date.now());
 }
 
