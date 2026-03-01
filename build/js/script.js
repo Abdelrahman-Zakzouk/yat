@@ -275,41 +275,91 @@ async function shareAsImage() {
   const preview = document.getElementById('previewImage');
   if (!canvas || !modal) return;
 
+  // 1. Wait for fonts and get content
   await document.fonts.ready;
   const ctx = canvas.getContext('2d');
   const verseText = document.getElementById('verse').innerText;
   const chapterText = document.getElementById('chapter').innerText;
 
-  canvas.width = 1080; canvas.height = 1080;
+  // 2. Setup Canvas Background
+  canvas.width = 1080;
+  canvas.height = 1080;
   const grad = ctx.createRadialGradient(540, 540, 50, 540, 540, 750);
-  grad.addColorStop(0, '#152422'); grad.addColorStop(1, '#0b1211');
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, 1080, 1080);
-  ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 10; ctx.strokeRect(30, 30, 1020, 1020);
+  grad.addColorStop(0, '#152422');
+  grad.addColorStop(1, '#0b1211');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1080, 1080);
 
-  ctx.textAlign = 'center'; ctx.direction = 'rtl';
-  ctx.fillStyle = '#2dd4bf'; ctx.font = '42px "Amiri", serif';
+  // 3. Draw Decorative Border
+  ctx.strokeStyle = '#2dd4bf';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(30, 30, 1020, 1020);
+
+  // 4. Draw Header (Chapter/Verse info)
+  ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
+  ctx.fillStyle = '#2dd4bf';
+  ctx.font = '42px "Amiri", serif';
   ctx.fillText(chapterText, 540, 120);
 
-  ctx.fillStyle = 'white';
-  let fontSize = 68;
-  ctx.font = `bold ${fontSize}px "Amiri", serif`;
-  let words = verseText.split(' '), lines = [], line = '';
-  words.forEach(w => {
-    if (ctx.measureText(line + w).width > 880) { lines.push(line.trim()); line = w + ' '; }
-    else { line += w + ' '; }
-  });
-  lines.push(line.trim());
-  let y = 540 - (lines.length * fontSize * 0.8) + fontSize;
-  lines.forEach(l => { ctx.fillText(l, 540, y); y += fontSize * 1.6; });
+  // 5. Dynamic Verse Scaling Logic
+  let fontSize = 68; // Ideal starting size
+  let lines = [];
+  const maxTextHeight = 720; // Maximum vertical box for the verse
+  const maxWidth = 880;      // Maximum width per line
 
-  ctx.fillStyle = '#2dd4bf'; ctx.font = '30px "Rakkas", serif';
+  // Helper to wrap text and calculate total height
+  const getLayout = (size) => {
+    ctx.font = `bold ${size}px "Amiri", serif`;
+    let words = verseText.split(' '), tempLines = [], currentLine = '';
+
+    words.forEach(w => {
+      let testLine = currentLine + w + ' ';
+      if (ctx.measureText(testLine).width > maxWidth) {
+        tempLines.push(currentLine.trim());
+        currentLine = w + ' ';
+      } else {
+        currentLine = testLine;
+      }
+    });
+    tempLines.push(currentLine.trim());
+    return {
+      lines: tempLines,
+      totalHeight: tempLines.length * (size * 1.5) // 1.5 is the line-height ratio
+    };
+  };
+
+  // Shrink loop: reduce font size until it fits the box
+  let layout = getLayout(fontSize);
+  while (layout.totalHeight > maxTextHeight && fontSize > 28) {
+    fontSize -= 3;
+    layout = getLayout(fontSize);
+  }
+
+  // 6. Draw the Verse Text (Vertically Centered)
+  ctx.fillStyle = 'white';
+  ctx.font = `bold ${fontSize}px "Amiri", serif`;
+
+  // Calculate starting Y to keep the block centered in the available space
+  let currentY = 540 - (layout.totalHeight / 2) + fontSize;
+
+  layout.lines.forEach(l => {
+    ctx.fillText(l, 540, currentY);
+    currentY += fontSize * 1.5;
+  });
+
+  // 7. Draw Footer
+  ctx.fillStyle = '#2dd4bf';
+  ctx.font = '30px "Rakkas", serif';
   ctx.fillText('تطبيق بياني | Bayani Quran', 540, 1030);
 
+  // 8. Generate Preview and Blob
   preview.src = canvas.toDataURL('image/png', 0.8);
   canvas.toBlob(blob => {
     cachedFile = new File([blob], `Ayah-${currentVerseKey}.png`, { type: "image/png" });
   }, 'image/png');
 
+  // 9. Show Modal
   modal.classList.replace('hidden', 'flex');
   setTimeout(() => modal.classList.add('active'), 50);
 }
