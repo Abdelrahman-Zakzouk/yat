@@ -19,39 +19,38 @@
 
 <body class="bg-[#0f1a19] text-slate-200 min-h-screen">
 
-    <header class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 glass sticky top-0 z-50">
-        <a class="text-3xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
+    <header
+        class="px-4 md:px-8 py-3 md:py-4 flex justify-between items-center border-b border-teal-900/50 glass sticky top-0 z-50 gap-2">
+        <a class="text-2xl md:text-3xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors "
             href="/index.html">بياني</a>
 
-        <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-orange-500/20">
-                <span class="text-orange-500 text-sm">🔥</span>
-                <span id="streakCount" class="text-white font-bold text-xs">٠</span>
+        <div class="flex items-center gap-2 md:gap-3">
+            <div
+                class="flex items-center gap-1 md:gap-1.5 bg-gray-800/50 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-orange-500/20">
+                <span class="text-orange-500 text-xs md:text-sm">🔥</span>
+                <span id="streakCount" class="text-white font-bold text-[10px] md:text-xs">٠</span>
             </div>
 
             <div
-                class="flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full border border-blue-500/20 transition-opacity">
-                <span class="text-blue-400 text-sm">❄️</span>
-                <span id="freezeCount" class="text-white font-bold text-xs">٠</span>
+                class="flex items-center gap-1 md:gap-1.5 bg-gray-800/50 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-blue-500/20 transition-opacity">
+                <span class="text-blue-400 text-xs md:text-sm">❄️</span>
+                <span id="freezeCount" class="text-white font-bold text-[10px] md:text-xs">٠</span>
             </div>
         </div>
 
-        <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-            <div class="hidden md:flex items-center gap-6">
-                <a href="/build/html/history.html"
-                    class="text-gray-400 hover:text-white transition-colors text-sm">السجل</a>
-            </div>
-            <div class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-                <button onclick="openIndex()" class="hover:text-teal-400 transition">القائمة</button>
+        <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400 ">
+            <div class="flex items-center gap-6">
+                <a onclick="openIndex()"
+                    class="text-gray-400 hover:text-white hover:text-teal-400 transition font-bold">القائمة</a>
             </div>
         </nav>
 
-        <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
+        <button onclick="openIndex()" class="text-teal-400 text-2xl md:text-3xl md:hidden flex items-center">
             <ion-icon name="menu-outline"></ion-icon>
         </button>
     </header>
 
-    <main class="max-w-4xl mx-auto p-6">
+    <main class="max-w-4xl mx-auto px-4 md:px-6 py-6">
         <div class="flex bg-[#1a2e2c] p-1 rounded-2xl border border-teal-800/50 mb-8 max-w-md mx-auto shadow-inner">
             <button onclick="engine.setMode('wird')" id="tab-wird"
                 class="flex-1 py-2 rounded-xl text-sm transition-all">ورد اليوم</button>
@@ -104,7 +103,11 @@
                 </div>
 
                 <div class="flex-1 text-center md:text-right">
-                    <h2 id="modeTitle" class="text-2xl font-bold text-white mb-1">...</h2>
+                    <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+                        <h2 id="modeTitle" class="text-2xl font-bold text-white">...</h2>
+                        <span id="khatmaProgressBadge"
+                            class="hidden text-[10px] bg-teal-500/10 text-teal-400 px-2 py-1 rounded-lg border border-teal-500/20 font-bold"></span>
+                    </div>
                     <p id="modeStatus" class="text-teal-500 text-sm mb-4">...</p>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-[#0f1a19]/50 p-3 rounded-xl border border-teal-800/30">
@@ -134,34 +137,70 @@
 
     <div id="readerModal" class="fixed inset-0 z-[100] hidden flex flex-col h-screen overflow-hidden">
         <nav
-            class="flex items-center justify-between p-4 bg-[#0a1a1a] text-white border-b border-white/10 sticky top-0 z-50">
-            <div class="flex-1 flex justify-start items-center gap-4">
-                <a href="/" class="flex items-center shrink-0">
-                    <span class="text-teal-400 font-bold text-2xl tracking-tighter"
+            class="flex items-center justify-between px-3 py-2 md:p-4 bg-[#0a1a1a] text-white border-b border-white/10 sticky top-0 z-50 gap-2 md:gap-4">
+            <div class="flex justify-start items-center gap-2 md:gap-4 ">
+                <a href="/index.html" class="flex items-center ">
+                    <span class="text-teal-400 font-bold text-xl md:text-2xl tracking-tighter"
                         style="font-family: 'Rakkas', serif;">بياني</span>
                 </a>
-                <div id="readerModeIndicator"
+                <!-- <div id="readerModeIndicator"
                     class="hidden sm:block px-3 py-1 rounded-md border border-teal-500/30 text-teal-400 text-xs font-medium whitespace-nowrap">
-                </div>
+                </div> -->
             </div>
 
-            <div class="flex-1 flex justify-center">
-                <div class="relative w-48 sm:w-64" id="surahSearchContainer">
+
+            <div class="flex-1 flex justify-center items-center min-w-0 mx-2">
+                <!-- Desktop: Audio Player + Search Combined -->
+                <div class="hidden md:flex audio-bar !gap-3 !pr-2 items-center">
+                    <div class="flex items-center gap-2">
+                        <button class="js-rewind-audio audio-btn !w-10 !h-10"><ion-icon name="play-forward"
+                                class="text-xl"></ion-icon></button>
+                        <button class="js-prev-surah audio-btn !w-10 !h-10"><ion-icon name="play-skip-forward"
+                                class="text-xl"></ion-icon></button>
+                        <button class="js-play-audio audio-play !w-12 !h-12"><ion-icon name="play"
+                                class="js-play-icon text-2xl text-slate-200"></ion-icon></button>
+                        <button class="js-next-surah audio-btn !w-10 !h-10"><ion-icon name="play-skip-back"
+                                class="text-xl"></ion-icon></button>
+                        <button class="js-forward-audio audio-btn !w-10 !h-10"><ion-icon name="play-back"
+                                class="text-xl"></ion-icon></button>
+                        <button class="js-stop-audio audio-btn !w-10 !h-10 opacity-50" disabled><ion-icon name="stop"
+                                class="text-teal-400 text-xl"></ion-icon></button>
+                    </div>
+
+                    <div class="w-px h-8 bg-white/10 mx-1"></div>
+
+                    <div class="relative w-56 search-wrapper">
+                        <div
+                            class="relative flex items-center bg-white/5 rounded-xl border border-white/5 focus-within:border-teal-500/50 transition-all">
+                            <ion-icon name="search-outline" class="text-teal-400 absolute right-3 text-sm"></ion-icon>
+                            <input type="text"
+                                class="surah-search-input bg-transparent border-none outline-none text-right w-full pr-9 pl-2 py-2 font-['Amiri'] text-sm text-white placeholder:text-white/20 min-w-0"
+                                placeholder="بحث عن سورة...">
+                        </div>
+                        <div
+                            class="surah-dropdown-list absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-[#0a1a1a] border border-white/10 rounded-2xl shadow-2xl hidden z-[120] custom-scrollbar">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile: Search Only -->
+                <div class="md:hidden relative w-full search-wrapper">
                     <div
                         class="relative flex items-center bg-white/10 rounded-full border border-white/5 focus-within:border-teal-500/50 transition-all">
-                        <ion-icon name="search-outline" class="text-teal-400 absolute right-4"></ion-icon>
-                        <input type="text" id="surahSearchInput" onfocus="Reader.showSurahList(true)"
-                            oninput="Reader.filterSurahDropdown()" placeholder="بحث عن سورة..."
-                            class="bg-transparent border-none outline-none text-right w-full pr-11 pl-4 py-2 font-['Amiri'] text-lg text-white placeholder:text-white/20">
+                        <ion-icon name="search-outline"
+                            class="text-teal-400 absolute right-3 md:right-4 text-xs md:text-base"></ion-icon>
+                        <input type="text"
+                            class="surah-search-input bg-transparent border-none outline-none text-right w-full pr-8 pl-2 py-1.5 font-['Amiri'] text-sm text-white placeholder:text-white/20 min-w-0"
+                            placeholder="بحث عن سورة...">
                     </div>
 
-                    <div id="surahDropdownList"
-                        class="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-[#0a1a1a] border border-white/10 rounded-2xl shadow-2xl hidden z-[120] custom-scrollbar">
+                    <div
+                        class="surah-dropdown-list absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-[#0a1a1a] border border-white/10 rounded-2xl shadow-2xl hidden z-[120] custom-scrollbar">
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 flex justify-end">
+            <div class="flex justify-end ">
                 <button onclick="Reader.close()" class="p-2 hover:bg-white/10 rounded-full transition-colors group">
                     <ion-icon name="close-outline"
                         class="text-2xl text-red-400 group-hover:scale-110 transition-transform"></ion-icon>
@@ -169,7 +208,7 @@
             </div>
         </nav>
 
-        <div class="flex-1 flex-col justify-center relative">
+        <div class="flex-1 flex-col justify-center relative overflow-y-auto">
             <div onclick="Reader.changePage(1)" class="hidden md:flex nav-zone left-0">
                 <div class="nav-arrow"><ion-icon name="chevron-forward"></ion-icon></div>
             </div>
@@ -191,17 +230,33 @@
                     <img id="imgLeft" class="quran-img" src="" draggable="false">
                 </div>
             </div>
+        </div>
 
-            <div id="mobileReaderControls" class="md:hidden">
+        <div class="p-3 bg-gradient-to-t from-[#0b1211] via-[#0b1211] to-transparent md:hidden">
+            <div id="mobileReaderControls" class="md:hidden flex gap-3 mb-3">
                 <button id="prevPageBtn" class="reader-btn">
                     <ion-icon name="chevron-back-outline"></ion-icon>
                     السابقة
                 </button>
-
                 <button id="nextPageBtn" class="reader-btn">
                     التالية
                     <ion-icon name="chevron-forward-outline"></ion-icon>
                 </button>
+            </div>
+            <!-- Mobile Audio Controls -->
+            <div class="audio-bar !gap-1.5 !px-2 w-full justify-center">
+                <button class="js-forward-audio audio-btn !w-9 !h-9"><ion-icon name="play-forward"
+                        class="text-lg"></ion-icon></button>
+                <button class="js-next-surah audio-btn !w-9 !h-9"><ion-icon name="play-skip-forward"
+                        class="text-lg"></ion-icon></button>
+                <button class="js-play-audio audio-play !w-12 !h-12"><ion-icon name="play"
+                        class="js-play-icon text-2xl text-slate-200"></ion-icon></button>
+                <button class="js-prev-surah audio-btn !w-9 !h-9"><ion-icon name="play-skip-back"
+                        class="text-lg"></ion-icon></button>
+                <button class="js-rewind-audio audio-btn !w-9 !h-9"><ion-icon name="play-back"
+                        class="text-lg"></ion-icon></button>
+                <button class="js-stop-audio audio-btn !w-9 !h-9 opacity-50" disabled><ion-icon name="stop"
+                        class="text-teal-400 text-lg"></ion-icon></button>
             </div>
         </div>
     </div>

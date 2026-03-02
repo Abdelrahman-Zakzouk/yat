@@ -516,3 +516,254 @@ input:-webkit-autofill:active {
     margin-top: 0.5rem;
   }
 }
+
+@media (min-width: 380px) {
+  .xs\:grid-cols-\[1\.5fr_1fr\] {
+    grid-template-columns: 1.5fr 1fr;
+  }
+}
+
+select#reciterSelect {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='Stack 19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  background-size: 1rem;
+  padding-left: 2rem;
+  /* Space for the arrow */
+}
+
+select#reciterSelect {
+  text-align: center;
+  text-align-last: center;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Optional: prevent text selection on buttons for a more app-like feel */
+button {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.audio-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.audio-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.audio-btn:active {
+  transform: scale(0.95);
+}
+
+.audio-btn-lg {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.audio-btn-lg:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.audio-icon {
+  color: #2dd4bf;
+  /* teal-400 */
+  font-size: 20px;
+}
+
+/* AUDIO BAR CONTAINER */
+.audio-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border-radius: 22px;
+  background: linear-gradient(135deg,
+      rgba(15, 35, 34, 0.85),
+      rgba(10, 25, 24, 0.95));
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 25px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(45, 212, 191, 0.05);
+}
+
+/* NORMAL BUTTONS */
+.audio-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: #2dd4bf;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.audio-btn:hover {
+  background: rgba(45, 212, 191, 0.15);
+  transform: translateY(-2px);
+}
+
+.audio-btn:active {
+  transform: scale(0.92);
+}
+
+/* PLAY BUTTON (BIGGER + GLOW) */
+.audio-play {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 30%, #2dd4bf, #0f766e);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow:
+    0 0 20px rgba(45, 212, 191, 0.1),
+    0 0 40px rgba(45, 212, 191, 0.1);
+}
+
+.audio-play:hover {
+  transform: scale(1.08);
+}
+
+.audio-play:active {
+  transform: scale(0.95);
+}
+
+/* --- Navbar Base --- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  background: rgba(26, 46, 44, 0.85);
+  /* Glassy dark */
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(45, 212, 191, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 1rem;
+}
+
+/* Logo */
+header a {
+  font-family: 'Rakkas', serif;
+  font-size: 1.8rem;
+  color: #2dd4bf;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+header a:hover {
+  color: #14b8a6;
+}
+
+/* Streak & Freeze badges */
+header>div.flex.items-center.gap-3 {
+  display: flex;
+  gap: 0.75rem;
+}
+
+header>div.flex.items-center.gap-3>div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 26, 25, 0.5);
+  transition: all 0.2s ease;
+}
+
+header>div.flex.items-center.gap-3>div:hover {
+  transform: translateY(-2px);
+}
+
+/* Navigation links */
+nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cbd5e1;
+}
+
+nav a,
+nav button {
+  color: #cbd5e1;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+nav a:hover,
+nav button:hover {
+  color: #2dd4bf;
+  transform: translateY(-2px);
+}
+
+/* Hamburger for mobile */
+header button {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2dd4bf;
+}
+
+@media (max-width: 768px) {
+  nav {
+    display: none;
+    /* hide nav links on mobile */
+  }
+
+  header button {
+    display: block;
+  }
+
+  header {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Optional: smooth hover effect for header items */
+header a,
+nav a,
+nav button,
+header button {
+  transition: transform 0.15s ease, color 0.2s ease;
+}

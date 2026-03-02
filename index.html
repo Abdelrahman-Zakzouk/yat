@@ -12,7 +12,7 @@
     href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Rakkas&display=swap"
     rel="stylesheet" />
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <link rel="stylesheet" href="/build/css/style.css">
+  <link rel="stylesheet" href="/build/css/style.css?v=1.1">
   <meta name="theme-color" content="#14b8a6">
   <meta name="mobile-web-app-capable" content="yes">
 
@@ -172,39 +172,46 @@
           class="quran-font text-2xl md:text-5xl text-center mb-8 md:mb-10 text-white leading-relaxed md:leading-normal">
         </p>
 
-        <div class="mt-4 flex flex-col md:flex-row items-center justify-center gap-3 w-full">
-          <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="toggleTafsir()"
-              class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 px-4 py-3 rounded-2xl border border-teal-800/50 transition-all active:scale-95 text-xs md:text-sm font-bold">
-              <ion-icon name="book-outline"></ion-icon><span>التفسير</span>
-            </button>
-            <button onclick="goToSurah()"
-              class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 px-4 py-3 rounded-2xl border border-teal-800/50 transition-all active:scale-95 text-xs md:text-sm font-bold">
-              <ion-icon name="open-outline"></ion-icon><span>السورة</span>
-            </button>
-          </div>
+        <div class="mt-8 w-full">
+  <div class="grid grid-cols-2 gap-3 md:flex md:items-stretch">
 
-          <div class="flex gap-2 w-full md:w-auto">
-            <div class="flex flex-1 md:flex-none bg-teal-600 rounded-2xl shadow-lg">
-              <button id="audioBtn" onclick="toggleAudio()"
-                class="flex-1 flex items-center justify-center gap-2 hover:bg-teal-500 text-white px-4 py-3 rounded-r-2xl border-l border-teal-700 transition-all active:scale-95 text-xs md:text-sm font-bold">
-                <ion-icon id="playIcon" name="play-outline"></ion-icon><span id="audioStatus">استماع</span>
-              </button>
-              <select id="reciterSelect" onchange="loadRecitation()"
-                class="bg-teal-600 text-white text-[10px] md:text-xs px-1 rounded-l-2xl outline-none border-none cursor-pointer">
-                <option value="Yasser_Ad-Dussary_128kbps">ياسر الدوسري</option>
-                <option value="Abdul_Basit_Mujawwad_128kbps">عبدالباسط عبدالصمد (المجوّد)</option>
-                <option value="Husary_128kbps">محمود خليل الحصري</option>
-                <option value="Alafasy_128kbps">مشاري راشد عفاسي</option>
-              </select>
-            </div>
-            <button onclick="shareAsImage()"
-              class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-2xl backdrop-blur-sm border border-white/10 transition-all active:scale-95 text-xs md:text-sm font-bold">
-              <ion-icon name="share-social-outline"></ion-icon><span>مشاركة</span>
-            </button>
-          </div>
-        </div>
+    <button onclick="toggleTafsir()"
+      class="flex items-center justify-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 h-12 md:h-14 md:flex-1 rounded-2xl border border-teal-800/50 transition-all active:scale-95 text-[11px] md:text-sm font-bold">
+      <ion-icon name="book-outline" class="text-lg"></ion-icon>
+      <span class="truncate">التفسير</span>
+    </button>
 
+    <button onclick="goToSurah()"
+      class="flex items-center justify-center gap-2 bg-teal-900/40 hover:bg-teal-800 text-teal-300 h-12 md:h-14 md:flex-1 rounded-2xl border border-teal-800/50 transition-all active:scale-95 text-[11px] md:text-sm font-bold">
+      <ion-icon name="open-outline" class="text-lg"></ion-icon>
+      <span class="truncate">السورة</span>
+    </button>
+
+    <div class="col-span-2 md:col-span-1 md:flex-[3] flex bg-teal-600 rounded-2xl shadow-lg overflow-hidden border border-teal-500/30 h-12 md:h-14">
+      <button id="audioBtn" onclick="toggleAudio()"
+        class="w-14 md:w-16 flex items-center justify-center bg-teal-700/40 hover:bg-teal-500 text-white transition-all border-l border-teal-500/20 shrink-0">
+        <ion-icon id="playIcon" name="play-outline" class="text-xl md:text-2xl"></ion-icon>
+      </button>
+
+      <div class="relative flex-1 min-w-0">
+        <select id="reciterSelect" onchange="loadRecitation()"
+          class="w-full h-full bg-transparent text-white text-[15px] md:text-base px-2 outline-none border-none cursor-pointer font-bold appearance-none text-center leading-none">
+          <option value="Yasser_Ad-Dussary_128kbps" class="bg-[#162927]">ياسر الدوسري</option>
+          <option value="Abdul_Basit_Mujawwad_128kbps" class="bg-[#162927]">عبدالباسط عبدالصمد</option>
+          <option value="Husary_128kbps" class="bg-[#162927]">محمود الحصري</option>
+          <option value="Alafasy_128kbps" class="bg-[#162927]">مشاري العفاسي</option>
+        </select>
+      </div>
+    </div>
+
+    <button onclick="shareAsImage()"
+      class="col-span-2 md:col-span-1 md:flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white h-12 md:h-14 rounded-2xl backdrop-blur-sm border border-white/10 transition-all active:scale-95 text-[11px] md:text-sm font-bold">
+      <ion-icon name="share-social-outline" class="text-lg"></ion-icon>
+      <span>مشاركة</span>
+    </button>
+
+  </div>
+</div>
         <div id="tafsirPanel" class="hidden w-full mt-8 p-4 md:p-6 bg-[#0f1a19] border border-teal-800 rounded-2xl">
           <h4 class="text-teal-400 font-bold mb-3 flex items-center gap-2 text-sm md:text-base">التفسير الميسر</h4>
           <p id="tafsirContent" class="text-slate-300 leading-relaxed font-['Amiri'] text-base md:text-lg"></p>
@@ -341,7 +348,7 @@
         </div>
         <div>
           <h4 class="text-white font-bold text-sm">ثبت تطبيق بياني</h4>
-          <p class="text-teal-400/70 text-[10px] uppercase tracking-wider">تصفح سريع وبدون إنترنت</p>
+          <p class="text-teal-400/70 text-[10px] uppercase tracking-wider">تصفح سريع</p>
         </div>
       </div>
       <div class="flex gap-2">
@@ -358,7 +365,7 @@
 
   <script src="/build/js/api-filter.js"></script>
   <script src="/build/js/global.js"></script>
-  <script src="/build/js/script.js"></script>
+  <script src="/build/js/script.js?v=1.1"></script>
 
 </body>
 
