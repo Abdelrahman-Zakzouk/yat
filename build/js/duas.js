@@ -74,7 +74,6 @@ const DuaEngine = {
                             <div class="progress-bar" style="width: 0%"></div>
                         </button>
                         <div class="flex flex-col items-end max-w-[50%]">
-                            <span class="text-[9px] text-teal-500 font-bold uppercase tracking-widest mb-1">المصدر</span>
                             <p class="text-xs text-slate-400 font-['Amiri'] text-right leading-relaxed italic">${desc}</p>
                         </div>
                     </div>
