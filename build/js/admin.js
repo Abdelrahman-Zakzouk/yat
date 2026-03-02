@@ -123,14 +123,16 @@ async function initStatsTracking() {
         const client = await ensureSb();
         const presenceChannel = client.channel('online-users');
 
+        const updateCount = () => {
+            const state = presenceChannel.presenceState();
+            const count = Object.keys(state).length;
+            const activeEl = document.getElementById('activeUsersCount');
+            if (activeEl) activeEl.innerText = count;
+        };
+
         presenceChannel
-            .on('presence', { event: 'sync' }, () => {
-                const state = presenceChannel.presenceState();
-                const count = Object.keys(state).length;
-                const activeEl = document.getElementById('activeUsersCount');
-                if (activeEl) activeEl.innerText = count;
-            })
-            .subscribe();
+            .on('presence', { event: 'sync' }, updateCount)
+            .subscribe((status) => { if (status === 'SUBSCRIBED') updateCount(); });
 
         fetchTotalVisits();
     } catch (e) { console.error("Stats tracking error:", e); }

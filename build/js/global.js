@@ -75,6 +75,7 @@ window.HadithEngine.BOOKS = {
 const BayaniGlobal = {
     sb: window.sb,
     presenceChannel: null,
+    onlineCount: 0,
 
     /**
      * Initialize global services
