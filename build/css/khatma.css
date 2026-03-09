@@ -1,0 +1,373 @@
+/* --- 1. Root Variables & Reset --- */
+:root {
+    --bg-dark: #0f1a19;
+    --teal-primary: #2dd4bf;
+    --paper-color: #f4f1ea;
+    --spine-shadow: #d8d4c7;
+    --bookmark-red: #991b1b;
+    --glass-bg: rgba(22, 41, 39, 0.8);
+}
+
+body {
+    font-family: 'Amiri', serif;
+    background-color: var(--bg-dark);
+}
+
+/* --- 2. Layout & Global Utilities --- */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+}
+
+.progress-ring {
+    transition: stroke-dashoffset 0.8s ease-in-out;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+#readerModal {
+    background-color: #0b1211;
+    pointer-events: auto !important;
+}
+
+/* --- 3. The Book Container (Joined Pages) --- */
+#bookContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    width: fit-content;
+    max-width: calc(100vw - 40px);
+    flex: 1 1 0%;
+    min-height: 0;
+    margin: 0 auto;
+    gap: 0;
+    z-index: 10;
+    position: relative;
+    pointer-events: none;
+}
+
+#bookContainer::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    transform: translateX(-50%);
+    background: linear-gradient(to right,
+            rgba(0, 0, 0, 0.1) 0%,
+            rgba(0, 0, 0, 0.2) 50%,
+            rgba(0, 0, 0, 0.1) 100%);
+    z-index: 30;
+    pointer-events: none;
+}
+
+#bookContainer.single-page-view::after {
+    display: none;
+}
+
+#bookContainer.single-page-view {
+    width: 44vw;
+    max-width: calc(100vw - 40px);
+}
+
+#bookContainer.single-page-view #pageRight {
+    width: 44vw !important;
+    border-radius: 8px !important;
+    background: var(--paper-color) !important;
+    margin: 0 !important;
+}
+
+/* --- 4. Individual Pages --- */
+#pageRight,
+#pageLeft {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-color);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    width: 44vw;
+    overflow: hidden;
+    border: none;
+    pointer-events: auto;
+    flex-shrink: 0;
+}
+
+#pageRight {
+    border-radius: 4px 8px 8px 4px;
+    background: linear-gradient(to left, var(--paper-color) 92%, var(--spine-shadow) 100%);
+    margin-left: -1px;
+}
+
+#pageLeft {
+    border-radius: 8px 4px 4px 8px;
+    background: linear-gradient(to right, var(--paper-color) 92%, var(--spine-shadow) 100%);
+    margin-right: -1px;
+}
+
+/* --- 5. Image Display & Container --- */
+#pageRight,
+#pageLeft {
+    padding: 1.5rem 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quran-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block !important;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    filter: sepia(0.05) contrast(1.02);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.quran-img.loaded {
+    opacity: 1 !important;
+}
+
+/* --- 6. Navigation Controls --- */
+.nav-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    pointer-events: auto;
+}
+
+.nav-zone.right-0 {
+    right: 0;
+    justify-content: flex-start;
+    padding-right: 1rem;
+}
+
+.nav-zone.left-0 {
+    left: 0;
+    justify-content: flex-end;
+    padding-left: 1rem;
+}
+
+.nav-zone:hover {
+    background: rgba(45, 212, 191, 0.02);
+}
+
+.nav-arrow {
+    font-size: 4vw;
+    color: rgba(45, 212, 191, 0.1);
+    transition: all 0.3s ease;
+}
+
+.nav-zone:hover .nav-arrow {
+    color: rgba(45, 212, 191, 0.6);
+    transform: scale(1.2);
+}
+
+/* --- 7. Physical Bookmark --- */
+#physicalBookmark {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    width: 35px;
+    height: 220px;
+    background: var(--bookmark-red);
+    z-index: 100;
+    pointer-events: auto !important;
+    transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 90%, 0% 100%);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+}
+
+.bookmark-active {
+    transform: translate(-50%, 0px) !important;
+}
+
+.bookmark-ahead {
+    transform: translate(calc(-50% - 240px), -30px) rotate(-5deg) !important;
+    opacity: 0.6;
+}
+
+.bookmark-behind {
+    transform: translate(calc(-50% + 240px), -30px) rotate(5deg) !important;
+    opacity: 0.6;
+}
+
+/* --- 8. Unified Mobile View --- */
+@media (max-width: 768px) {
+    #pageLeft {
+        display: none !important;
+    }
+
+    #bookContainer {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 8px;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start;
+        pointer-events: auto !important;
+    }
+
+    #pageRight {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0;
+        border-radius: 10px;
+        background: var(--paper-color);
+        padding: 1.2rem 0.8rem;
+    }
+
+    /* In column flex, flex:1 on pageRight fills the container HEIGHT (main axis) */
+    #pageRight.mq-text-mode {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        align-self: auto !important;
+        padding: 16px 14px 14px !important;
+    }
+
+    #bookContainer::after {
+        display: none;
+    }
+
+    #physicalBookmark {
+        width: 22px;
+        height: 110px;
+        left: 90% !important;
+        top: -5px;
+    }
+
+    .bookmark-ahead,
+    .bookmark-behind {
+        transform: translate(-50%, -120px) !important;
+        opacity: 0.3;
+    }
+}
+
+/* Footer & Input Cleanup */
+.page-footer {
+    padding: 0.5rem;
+    text-align: center;
+    z-index: 20;
+}
+
+#gotoPageInput::-webkit-inner-spin-button,
+#gotoPageInput::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* --- Mobile Reader Controls --- */
+#mobileReaderControls {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: linear-gradient(to top, #0b1211 70%, transparent);
+    z-index: 60;
+}
+
+.reader-btn {
+    flex: 1;
+    background: rgba(45, 212, 191, 0.08);
+    border: 1px solid rgba(45, 212, 191, 0.3);
+    color: #2dd4bf;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.reader-btn:active {
+    transform: scale(0.95);
+    background: rgba(45, 212, 191, 0.2);
+}
+
+/* ══ MQ Text Reader Overrides ═════════════════════════════════════════════ */
+
+#readerModal > div.flex-1 {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#bookContainer {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    align-items: stretch !important;
+    display: flex !important;
+}
+
+/* Both pages MUST be equal height — use align-self:stretch */
+#pageRight.mq-text-mode,
+#pageLeft.mq-text-mode {
+    align-self: stretch !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    overflow: hidden !important;
+    position: relative !important;
+    padding: 28px 30px 20px !important;
+    background: linear-gradient(160deg, #fdf8ef 0%, #f5ecda 100%) !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Clear any old pseudo-element borders */
+#pageRight.mq-text-mode::before, #pageLeft.mq-text-mode::before,
+#pageRight.mq-text-mode::after,  #pageLeft.mq-text-mode::after {
+    content: none !important;
+    display: none !important;
+}
+
+.mq-content {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* single-page-view is desktop-only; mobile is always single-page */
+@media (max-width: 768px) {
+    #bookContainer.single-page-view {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ── FIX: Short / lone-word lines — center instead of full justify ──────── */
+/* When a line has ≤ 2 words (e.g. a verse end that wraps alone, or "الله"
+   on its own), do NOT stretch it across the full width.  Center it instead,
+   which matches the visual style of a real Mushaf. */
+.mq-line-lone {
+    text-align: center !important;
+    text-align-last: center !important;
+    text-justify: auto !important;
+}

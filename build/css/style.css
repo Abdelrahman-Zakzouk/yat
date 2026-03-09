@@ -1,0 +1,769 @@
+/* --- Global Styles & Background --- */
+body {
+  background: radial-gradient(circle at top right, #1a2e2c, #0b1413);
+  background-attachment: fixed;
+  overflow-x: hidden;
+  color: #e2e8f0;
+}
+
+::selection {
+  background: #14b8a6;
+  color: white;
+}
+
+/* --- Typography - Enhanced for Arabic Calligraphy --- */
+.quran-font {
+  font-family: "Amiri Quran", serif;
+  font-weight: 400;
+  /* 2.2 is the golden ratio for Uthmani script, 2.5 for extra breathing room */
+  line-height: 2.2 !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  text-wrap: balance;
+  direction: rtl;
+  padding: 1.5rem 0;
+}
+
+/* --- Scrollbars --- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f1a19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #14b8a6;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #134e4a;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2dd4bf;
+}
+
+/* --- Modals (Index & Share) --- */
+#shareModal,
+#indexModal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  /* Kept flex but hidden via visibility/opacity for transitions */
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#shareModal.active,
+#indexModal.active {
+  opacity: 1 !important;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+#shareModal.hidden,
+#indexModal.hidden {
+  display: none !important;
+}
+
+/* Modal Content Animation */
+#shareModal>div,
+#indexModal>div {
+  transform: scale(0.9);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#shareModal.active>div,
+#indexModal.active>div {
+  transform: scale(1);
+}
+
+/* --- Buttons --- */
+.share-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 0 !important;
+  border-radius: 1rem !important;
+  font-weight: 700;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.share-btn:active {
+  transform: scale(0.95);
+}
+
+.share-btn ion-icon {
+  font-size: 1.5rem;
+}
+
+#audioBtn {
+  min-width: 110px;
+}
+
+.action-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* --- Animations & Canvas --- */
+.fade-in {
+  animation: fadeIn 0.8s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#shareCanvas {
+  display: none;
+}
+
+/* --- Responsive Media Queries --- */
+
+/* Tablet/Mobile Index Modal */
+/* Tablet/Mobile Index Modal - Fixed Top Entry */
+@media (max-width: 768px) {
+  #indexModal {
+    /* Align to top to ensure nothing hides under the URL bar */
+    align-items: flex-start;
+    padding: 0;
+    height: 100dvh;
+  }
+
+  #indexModal>div {
+    width: 100%;
+    /* Use 100% height to fill the visible area exactly */
+    height: 100%;
+    height: 100dvh;
+
+    max-width: 100%;
+    margin: 0;
+    /* Remove large top rounding if going full screen, or keep small */
+    border-radius: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    /* Critical: Ensures content starts below the notch/status bar */
+    padding-top: env(safe-area-inset-top, 0px);
+
+    background-color: rgb(26 46 44);
+    transform: none !important;
+    border: none;
+  }
+
+  /* Ensure the Header is always visible at the top */
+  .modal-header {
+    flex-shrink: 0;
+    padding: 1rem 1.25rem;
+    background: rgba(0, 0, 0, 0.2);
+    /* Subtle contrast for the header */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(45, 212, 191, 0.1);
+  }
+
+  #indexGrid {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 1rem env(safe-area-inset-bottom, 2rem) 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Extra Small Screens (Buttons stack) */
+@media (max-width: 480px) {
+  .flex-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .flex-wrap>div {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  button {
+    justify-content: center;
+  }
+}
+
+/* Styling the options inside the dropdown */
+select option {
+  background-color: #0a0a0a;
+  /* Dark background */
+  color: white;
+  padding: 10px;
+}
+
+/* Remove the default arrow in IE/Edge */
+select::-ms-expand {
+  display: none;
+}
+
+#dropdownList {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar for the list */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(20, 184, 166, 0.3);
+  /* Teal-500 */
+  border-radius: 10px;
+}
+
+/* Fix for browser autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0b1211 inset !important;
+  /* Match your darkest background */
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* --- Enhanced Lesson Learnt Callout --- */
+.lesson-container {
+  margin-top: 2.5rem;
+  width: 100%;
+  max-width: 650px;
+  /* Increased width */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2rem;
+  /* background: linear-gradient(145deg, rgba(45, 212, 191, 0.05) 0%, rgba(11, 18, 17, 0.8) 100%); */
+  backdrop-filter: blur(10px);
+  border-right: 5px solid #2dd4bf;
+  /* Thicker accent border */
+  border-radius: 15px 30px 30px 15px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-left: 1px solid rgba(45, 212, 191, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lesson-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  /* background: linear-gradient(to left, rgba(45, 212, 191, 0.05), transparent); */
+  pointer-events: none;
+}
+
+.lesson-title {
+  font-family: 'Rakkas', serif;
+  color: #2dd4bf;
+  font-size: 1.5rem;
+  /* Larger title */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 15px rgba(45, 212, 191, 0.3);
+}
+
+.lesson-title::before {
+  content: "✦";
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.lesson-text {
+  font-family: 'Amiri', serif;
+  line-height: 2;
+  /* Breathable line height for Uthmani/Amiri */
+  color: #cbd5e1;
+  font-size: 1.2rem;
+  text-align: justify;
+}
+
+/* Hover effect to make it feel "active" */
+.lesson-container:hover {
+  transform: translateY(-5px) scale(1.01);
+  /* background: linear-gradient(145deg, rgba(45, 212, 191, 0.08) 0%, rgba(11, 18, 17, 0.9) 100%); */
+  /* box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(45, 212, 191, 0.1); */
+}
+
+/* Mobile Tweaks */
+@media (max-width: 640px) {
+  .lesson-container {
+    width: 95%;
+    padding: 1.5rem;
+    border-radius: 10px 20px 20px 10px;
+  }
+
+  .lesson-title {
+    font-size: 1.3rem;
+  }
+
+  .lesson-text {
+    font-size: 1.1rem;
+  }
+}
+
+/* --- Enhanced Lesson Learnt Callout --- */
+.lesson-container {
+  margin-top: 2.5rem;
+  width: 100%;
+  max-width: 750px;
+  /* Increased width for a more cinematic feel */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2.5rem;
+  /* background: linear-gradient(145deg, rgba(45, 212, 191, 0.08) 0%, rgba(11, 18, 17, 0.95) 100%); */
+  backdrop-filter: blur(12px);
+
+  /* The Fix: Force rounding */
+  border-radius: 15px 40px 40px 15px;
+  overflow: hidden;
+  /* CRITICAL: This stops the background from 'leaking' past corners */
+
+  border-right: 6px solid #2dd4bf;
+  border-left: 1px solid rgba(45, 212, 191, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(45, 212, 191, 0.05);
+  transition: all 0.4s ease;
+}
+
+/* Internal Decorative Glow - Adjusted to stay inside the rounded corners */
+.lesson-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 100%;
+  /* background: linear-gradient(to left, rgba(45, 212, 191, 0.1), transparent); */
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lesson-title {
+  position: relative;
+  z-index: 1;
+  /* Stay above the glow */
+  font-family: 'Rakkas', serif;
+  color: #2dd4bf;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.2rem;
+  text-shadow: 0 0 20px rgba(45, 212, 191, 0.4);
+}
+
+.lesson-text {
+  position: relative;
+  z-index: 1;
+  font-family: 'Amiri', serif;
+  line-height: 2.1;
+  color: #e2e8f0;
+  /* Brighter for better contrast */
+  font-size: 1.25rem;
+  text-align: justify;
+  direction: rtl;
+}
+
+/* 1. Parent Wrapper - Strip styles and allow expansion */
+#notePanel {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 2rem auto;
+  width: 100%;
+}
+
+/* 2. The Card - Solid Match + Wide Layout */
+.lesson-container {
+  width: 100%;
+  max-width: 1000px;
+  /* Expands to match main section width */
+  margin: 0 auto;
+  padding: 2.5rem 3rem;
+
+  /* Mimic Verse BG: Solid deep matte, no gradient */
+  background-color: #1a2422;
+
+  /* Visual styling and Rounding */
+  border-radius: 20px;
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  border-right: 8px solid #2dd4bf;
+  /* Teal accent line */
+
+  /* Fix: Clips content to rounded edges */
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.lesson-title {
+  font-family: 'Rakkas', serif;
+  color: #2dd4bf;
+  font-size: 1.6rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  direction: rtl;
+}
+
+.lesson-text {
+  font-family: 'Amiri', serif;
+  line-height: 2.2;
+  color: #e2e8f0;
+  font-size: 1.35rem;
+  text-align: right;
+  direction: rtl;
+}
+
+#ayahInput::-webkit-inner-spin-button,
+#ayahInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Custom styling for the Resume Widget */
+#resumeWidget {
+  animation: slideInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Make the text separator dots look elegant */
+#resumeStatusText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .nav-zone {
+    width: 40px !important;
+    /* Narrow triggers for mobile */
+  }
+
+  header {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  #resumeWidget {
+    margin-top: 0.5rem;
+  }
+}
+
+@media (min-width: 380px) {
+  .xs\:grid-cols-\[1\.5fr_1fr\] {
+    grid-template-columns: 1.5fr 1fr;
+  }
+}
+
+select#reciterSelect {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='Stack 19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  background-size: 1rem;
+  padding-left: 2rem;
+  /* Space for the arrow */
+}
+
+select#reciterSelect {
+  text-align: center;
+  text-align-last: center;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Optional: prevent text selection on buttons for a more app-like feel */
+button {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.audio-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.audio-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.audio-btn:active {
+  transform: scale(0.95);
+}
+
+.audio-btn-lg {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.audio-btn-lg:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.audio-icon {
+  color: #2dd4bf;
+  /* teal-400 */
+  font-size: 20px;
+}
+
+/* AUDIO BAR CONTAINER */
+.audio-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border-radius: 22px;
+  background: linear-gradient(135deg,
+      rgba(15, 35, 34, 0.85),
+      rgba(10, 25, 24, 0.95));
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 25px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(45, 212, 191, 0.05);
+}
+
+/* NORMAL BUTTONS */
+.audio-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: #2dd4bf;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.audio-btn:hover {
+  background: rgba(45, 212, 191, 0.15);
+  transform: translateY(-2px);
+}
+
+.audio-btn:active {
+  transform: scale(0.92);
+}
+
+/* PLAY BUTTON (BIGGER + GLOW) */
+.audio-play {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 30%, #2dd4bf, #0f766e);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow:
+    0 0 20px rgba(45, 212, 191, 0.1),
+    0 0 40px rgba(45, 212, 191, 0.1);
+}
+
+.audio-play:hover {
+  transform: scale(1.08);
+}
+
+.audio-play:active {
+  transform: scale(0.95);
+}
+
+/* --- Navbar Base --- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  background: rgba(26, 46, 44, 0.85);
+  /* Glassy dark */
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(45, 212, 191, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 1rem;
+}
+
+/* Logo */
+header a {
+  font-family: 'Rakkas', serif;
+  font-size: 1.8rem;
+  color: #2dd4bf;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+header a:hover {
+  color: #14b8a6;
+}
+
+/* Streak & Freeze badges */
+header>div.flex.items-center.gap-3 {
+  display: flex;
+  gap: 0.75rem;
+}
+
+header>div.flex.items-center.gap-3>div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 26, 25, 0.5);
+  transition: all 0.2s ease;
+}
+
+header>div.flex.items-center.gap-3>div:hover {
+  transform: translateY(-2px);
+}
+
+/* Navigation links */
+nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cbd5e1;
+}
+
+nav a,
+nav button {
+  color: #cbd5e1;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+nav a:hover,
+nav button:hover {
+  color: #2dd4bf;
+  transform: translateY(-2px);
+}
+
+/* Hamburger for mobile */
+header button {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2dd4bf;
+}
+
+@media (max-width: 768px) {
+  nav {
+    display: none;
+    /* hide nav links on mobile */
+  }
+
+  header button {
+    display: block;
+  }
+
+  header {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Optional: smooth hover effect for header items */
+header a,
+nav a,
+nav button,
+header button {
+  transition: transform 0.15s ease, color 0.2s ease;
+}

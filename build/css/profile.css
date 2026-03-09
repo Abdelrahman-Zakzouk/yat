@@ -1,0 +1,32 @@
+body {
+    background: radial-gradient(circle at top right, #1a2e2c, #0b1413);
+    background-attachment: fixed;
+    color: #e2e8f0;
+    font-family: 'Amiri', serif;
+    min-height: 100vh;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quran-font {
+    font-family: "Amiri Quran", "Amiri", serif;
+    line-height: 1.8;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2dd4bf33;
+    border-radius: 10px;
+}

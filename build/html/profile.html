@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <link rel="manifest" href="/manifest.json">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي | بياني</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/build/css/profile.css">
+
+</head>
+
+<body class="pb-20">
+
+    <header class="sticky top-0 z-50 p-6 flex justify-between items-center max-w-2xl mx-auto w-full backdrop-blur-md">
+        <a href="/index.html"
+            class="w-10 h-10 flex items-center justify-center rounded-full glass-card hover:bg-white/10 transition-all">
+            <i class="fas fa-chevron-right text-teal-400"></i>
+        </a>
+        <h1 class="text-xl font-bold tracking-wide">الملف الشخصي</h1>
+        <div class="w-10"></div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-6">
+
+        <div class="glass-card rounded-[2.5rem] p-8 text-center mb-8 mt-4">
+            <div class="relative inline-block group">
+                <div onclick="document.getElementById('pfpInput').click()"
+                    class="w-24 h-24 bg-teal-500/10 rounded-full mx-auto mb-4 flex items-center justify-center border border-teal-500/30 overflow-hidden cursor-pointer hover:bg-teal-500/20 transition-all">
+                    <img id="userPfp" src="" class="w-full h-full object-cover hidden">
+                    <i id="defaultIcon" class="fas fa-user text-4xl text-teal-400"></i>
+
+                    <div
+                        class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                        <i class="fas fa-camera text-white"></i>
+                    </div>
+                </div>
+                <input type="file" id="pfpInput" accept="image/*" class="hidden"
+                    onchange="ProfileManager.uploadPfp(event)">
+            </div>
+
+
+            <h2 id="profileEmail" class="text-lg font-semibold text-white mb-1 tracking-tight">جاري التحميل...</h2>
+            <div onclick="ProfileManager.copyId()"
+                class="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1 rounded-full cursor-pointer hover:bg-white/10 transition-all mb-3 group">
+                <span id="profileId"
+                    class="text-[9px] font-mono text-slate-500 group-hover:text-teal-400 transition-colors">ID:
+                    loading...</span>
+                <i class="far fa-copy text-[9px] text-slate-600 group-hover:text-teal-400"></i>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">عضو في مجتمع بياني</p>
+
+            <button onclick="handleLogout()"
+                class="px-6 py-2 rounded-full text-xs font-bold text-red-400 border border-red-400/20 hover:bg-red-400/10 transition-all">
+                تسجيل الخروج
+            </button>
+        </div>
+        <a href="../html/admin.html" id="adminDashboardBtn"
+            class="hidden flex items-center justify-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-500 p-4 rounded-2xl hover:bg-amber-500/20 transition-all mb-4">
+            <i class="fas fa-user-shield"></i>
+            <span class="font-bold">لوحة التحكم للمسؤولين</span>
+        </a>
+        <div class="grid grid-cols-3 gap-3 mb-10">
+            <div class="glass-card rounded-3xl p-5 text-center">
+                <span class="block text-3xl font-bold text-teal-400 mb-1" id="favCount">0</span>
+                <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">الأحاديث المفضلة</span>
+            </div>
+            <div class="glass-card rounded-3xl p-5 text-center">
+                <span class="block text-3xl font-bold text-amber-400 mb-1" id="ayahCount">0</span>
+                <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">الآيات المحفوظة</span>
+            </div>
+            <div class="glass-card rounded-3xl p-5 text-center">
+                <span class="block text-3xl font-bold text-teal-400 mb-1" id="streakCount">١</span>
+                <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">أيام المتابعة</span>
+            </div>
+        </div>
+
+         <!-- ── Saved Ayahs Section ── -->
+        <div class="flex items-center justify-between mb-6 px-2 mt-12">
+            <h3 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-bookmark text-amber-400 text-sm"></i> الآيات المحفوظة
+            </h3>
+            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter" id="ayahStatus">قائمة فارغة</span>
+        </div>
+
+        <div id="savedAyahsList" class="space-y-6 pb-10">
+            <div class="text-center py-20 opacity-30">
+                <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+                <p>جاري تحميل الآيات...</p>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-6 px-2">
+            <h3 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-heart text-red-500 text-sm"></i> الأحاديث المحفوظة
+            </h3>
+            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter" id="listStatus">قائمة
+                فارغة</span>
+        </div>
+
+        <div id="favoritesList" class="space-y-6">
+            <div class="text-center py-20 opacity-30">
+                <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+                <p>جاري تحميل الأحاديث...</p>
+            </div>
+        </div>
+
+       
+
+    </main>
+
+    <div id="toast"
+        class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-teal-500 text-white rounded-full text-sm font-bold shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-[200]">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="/build/js/global.js"></script>
+    <script src="/build/js/profile.js"></script>
+
+</body>
+
+</html>

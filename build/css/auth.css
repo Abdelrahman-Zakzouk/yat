@@ -1,0 +1,11 @@
+body {
+    background: radial-gradient(circle at top right, #1a2e2c, #0b1413);
+    min-height: 100vh;
+    font-family: 'Amiri', serif;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}

@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'kfgqpc_hafs_uthmanic_scriptRg';
+  src: url('./UthmanicHafs_V22.ttf') format('ttf'),
+    url('./UthmanicHafs_V22.ttf') format('tff');
+  font-weight: normal;
+  font-style: normal;
+
+}
+
+.radial-bg {
+  background: radial-gradient(circle at 200% -30%, rgb(175, 162, 212) 0%, rgb(42, 35, 102) 100%);
+}
+
+.typography-ar {
+  font-family: "Rakkas", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.quran-font {
+  font-size: 2rem;
+  font-weight: 400;
+  font-style: normal;
+  font-family: "kfgqpc_hafs_uthmanic_scriptRg";
+  line-height: 2em;
+}
