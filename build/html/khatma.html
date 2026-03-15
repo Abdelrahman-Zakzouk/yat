@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بياني | رحلة الختمة</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Rakkas&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@700;800&family=Rakkas&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/build/css/khatma.css">
     <link rel="stylesheet" href="/build/css/style.css">
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
@@ -21,8 +21,7 @@
 
     <header
         class="px-4 md:px-8 py-3 md:py-4 flex justify-between items-center border-b border-teal-900/50 glass sticky top-0 z-50 gap-2">
-        <a class="text-2xl md:text-3xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors "
-            href="/index.html">بياني</a>
+        <a href="/index.html" class="text-2xl md:text-3xl font-['Rakkas'] text-teal-400 select-none" aria-label="العودة للرئيسية">بياني</a>
 
         <div class="flex items-center gap-2 md:gap-3">
             <div
@@ -38,15 +37,8 @@
             </div>
         </div>
 
-        <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400 ">
-            <div class="flex items-center gap-6">
-                <a onclick="openIndex()"
-                    class="text-gray-400 hover:text-white hover:text-teal-400 transition font-bold">القائمة</a>
-            </div>
-        </nav>
-
-        <button onclick="openIndex()" class="text-teal-400 text-2xl md:text-3xl md:hidden flex items-center">
-            <ion-icon name="menu-outline"></ion-icon>
+        <button onclick="openIndex()" class="text-teal-400 text-xl md:text-2xl flex items-center" aria-label="فتح القائمة">
+            <ion-icon name="grid-outline"></ion-icon>
         </button>
     </header>
 
@@ -169,6 +161,17 @@
 
                     <div class="w-px h-8 bg-white/10 mx-1"></div>
 
+                    <select
+                        class="js-reciter-select bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white min-w-[180px] outline-none focus:border-teal-500/60"
+                        aria-label="اختيار القارئ">
+                        <option value="97" class="bg-[#0a1a1a]">ياسر الدوسري</option>
+                        <option value="2" class="bg-[#0a1a1a]">عبد الباسط عبد الصمد</option>
+                        <option value="12" class="bg-[#0a1a1a]">محمود خليل الحصري</option>
+                        <option value="7" class="bg-[#0a1a1a]">مشاري العفاسي</option>
+                    </select>
+
+                    <div class="w-px h-8 bg-white/10 mx-1"></div>
+
                     <div class="relative w-56 search-wrapper">
                         <div
                             class="relative flex items-center bg-white/5 rounded-xl border border-white/5 focus-within:border-teal-500/50 transition-all">
@@ -221,7 +224,7 @@
             </div>
         </nav>
 
-        <div class="flex-1 flex flex-col relative overflow-hidden" style="min-height:0">
+        <div class="flex-1 flex flex-col relative" style="min-height:0">
             <div onclick="Reader.changePage(1)" class="hidden md:flex nav-zone left-0">
                 <div class="nav-arrow"><ion-icon name="chevron-forward"></ion-icon></div>
             </div>
@@ -270,6 +273,16 @@
                         class="text-lg"></ion-icon></button>
                 <button class="js-stop-audio audio-btn !w-9 !h-9 opacity-50" disabled><ion-icon name="stop"
                         class="text-teal-400 text-lg"></ion-icon></button>
+            </div>
+            <div class="mt-2 px-1">
+                <select
+                    class="js-reciter-select w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-teal-500/60"
+                    aria-label="اختيار القارئ">
+                    <option value="97" class="bg-[#0a1a1a]">ياسر الدوسري</option>
+                    <option value="2" class="bg-[#0a1a1a]">عبد الباسط عبد الصمد</option>
+                    <option value="12" class="bg-[#0a1a1a]">محمود خليل الحصري</option>
+                    <option value="7" class="bg-[#0a1a1a]">مشاري العفاسي</option>
+                </select>
             </div>
         </div>
     </div>

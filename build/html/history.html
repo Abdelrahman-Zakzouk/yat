@@ -15,37 +15,69 @@
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
 </head>
 
-<body class="pt-24 pb-12">
+<body class="pt-24 pb-16 history-page">
 
     <nav class="fixed top-0 left-0 right-0 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 z-50">
         <header
             class="px-8 py-4 flex justify-between items-center border-b border-teal-900/50 bg-[#162927]/80 backdrop-blur-md sticky top-0 z-50">
-            <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
-                href="/index.html">بياني</a>
-            <nav class="hidden md:flex gap-8 text-sm uppercase tracking-wider text-slate-400">
-                <div class="hidden md:flex items-center gap-6">
-                    <a onclick="openIndex()"
-                        class="text-gray-400 hover:text-white transition-colors text-sm">القائمة</a>
-                </div>
-            </nav>
-            <button onclick="openIndex()" class="text-teal-400 text-3xl md:hidden">
-                <ion-icon name="menu-outline"></ion-icon>
+            <a href="/index.html" class="text-4xl font-['Rakkas'] text-teal-400 select-none" aria-label="العودة للرئيسية">بياني</a>
+            <button onclick="openIndex()" class="text-teal-400 text-2xl" aria-label="فتح القائمة">
+                <ion-icon name="grid-outline"></ion-icon>
             </button>
         </header>
     </nav>
 
-    <main class="max-w-3xl mx-auto px-6">
-        <header class="mb-12 text-center">
-            <h2 class="text-3xl font-bold quran-font mb-2">سجل الآيات السابقة</h2>
-            <p class="text-gray-500 text-sm">أرشيف التدبر والرسائل اليومية</p>
+    <main class="max-w-4xl mx-auto px-5 md:px-6">
+        <header class="mb-8 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 text-teal-300 text-xs font-bold mb-4">
+                <ion-icon name="sparkles-outline"></ion-icon>
+                سجل يومي منظم
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold quran-font mb-2">سجل الآيات والأحاديث</h2>
+            <p class="text-gray-400 text-sm">أرشيف التدبر والرسائل اليومية (القرآن + الحديث)</p>
         </header>
 
-        <div id="loading" class="text-center py-20">
-            <div class="inline-block w-8 h-8 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin">
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="historySummary">
+            <div class="history-stat-card col-span-1 md:col-span-1">
+                <span class="history-stat-label">الآيات</span>
+                <span class="history-stat-value" id="verseCount">0</span>
+            </div>
+            <div class="history-stat-card col-span-1 md:col-span-1">
+                <span class="history-stat-label">الأحاديث</span>
+                <span class="history-stat-value" id="hadithCount">0</span>
+            </div>
+            <div class="history-stat-card col-span-2 md:col-span-2 flex-row items-center justify-between">
+                <div class="flex flex-col">
+                    <span class="history-stat-label">آخر تحديث</span>
+                    <span class="history-stat-value text-lg" id="historyLastUpdated">—</span>
+                </div>
+                <button id="refreshHistoryBtn"
+                    class="px-3 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 text-xs font-bold transition-all duration-200">
+                    تحديث
+                </button>
+            </div>
+        </section>
+
+        <div class="flex justify-center mb-8">
+            <div class="inline-flex rounded-2xl border border-white/10 bg-white/[0.03] p-1 gap-1" id="historyFilters">
+                <button data-history-filter="verse"
+                    class="history-filter-btn px-4 py-2 rounded-xl text-sm font-bold bg-teal-500/20 text-teal-300 border border-teal-400/30 transition-all duration-200">
+                    الآيات
+                </button>
+                <button data-history-filter="hadith"
+                    class="history-filter-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-300 border border-transparent hover:bg-white/5 transition-all duration-200">
+                    الأحاديث
+                </button>
             </div>
         </div>
 
-        <div id="historyList" class="space-y-6"></div>
+        <div id="loading" class="py-8 space-y-4">
+            <div class="history-skeleton h-32"></div>
+            <div class="history-skeleton h-32"></div>
+            <div class="history-skeleton h-32"></div>
+        </div>
+
+        <div id="historyList" class="space-y-4 md:space-y-5"></div>
     </main>
 
     <div id="indexModal"

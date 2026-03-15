@@ -1,22 +1,44 @@
+/* ═══════════════════════════════════════════════════════════════
+   Bayani — Khatma Page + Reader  |  Complete Integrated Stylesheet
+   ═══════════════════════════════════════════════════════════════ */
+
+/* --- 0. Custom Fonts --- */
+@font-face {
+    font-family: 'p1-v2';
+    src: url('https://verses.quran.foundation/fonts/quran/hafs/v2/woff2/p1.woff2') format('woff2');
+    font-display: swap;
+}
+
+.quran-font {
+    font-family: 'p1-v2', 'Noto Naskh Arabic', 'Scheherazade New', 'Amiri Quran', 'Amiri', serif;
+    font-weight: 500;
+}
+
 /* --- 1. Root Variables & Reset --- */
 :root {
-    --bg-dark: #0f1a19;
-    --teal-primary: #2dd4bf;
-    --paper-color: #f4f1ea;
-    --spine-shadow: #d8d4c7;
-    --bookmark-red: #991b1b;
-    --glass-bg: rgba(22, 41, 39, 0.8);
+    --bg-dark:        #0f1a19;
+    --teal-primary:   #2dd4bf;
+    --paper-color:    #f0e8d8;
+    --paper-dark:     #e8dcc8;
+    --spine-shadow:   #c8b89a;
+    --bookmark-red:   #991b1b;
+    --glass-bg:       rgba(22, 41, 39, 0.85);
+    --ink:            #2c1a0e;
+    --gold:           #b8976a;
 }
+
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
     font-family: 'Amiri', serif;
     background-color: var(--bg-dark);
 }
 
-/* --- 2. Layout & Global Utilities --- */
+/* --- 2. Utilities --- */
 .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .progress-ring {
@@ -25,12 +47,16 @@ body {
     transform-origin: 50% 50%;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   READER MODAL
+   ═══════════════════════════════════════════════════════════════ */
+
 #readerModal {
-    background-color: #0b1211;
+    background: radial-gradient(ellipse at center, #1a2e2c 0%, #0b1211 100%);
     pointer-events: auto !important;
 }
 
-/* --- 3. The Book Container (Joined Pages) --- */
+/* --- 3. Book Container --- */
 #bookContainer {
     display: flex;
     flex-direction: row;
@@ -53,19 +79,18 @@ body {
     left: 50%;
     top: 0;
     bottom: 0;
-    width: 4px;
+    width: 6px;
     transform: translateX(-50%);
     background: linear-gradient(to right,
-            rgba(0, 0, 0, 0.1) 0%,
-            rgba(0, 0, 0, 0.2) 50%,
-            rgba(0, 0, 0, 0.1) 100%);
+        rgba(0,0,0,0.18) 0%,
+        rgba(0,0,0,0.35) 45%,
+        rgba(0,0,0,0.35) 55%,
+        rgba(0,0,0,0.18) 100%);
     z-index: 30;
     pointer-events: none;
 }
 
-#bookContainer.single-page-view::after {
-    display: none;
-}
+#bookContainer.single-page-view::after { display: none; }
 
 #bookContainer.single-page-view {
     width: 44vw;
@@ -85,37 +110,36 @@ body {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--paper-color);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     width: 44vw;
     overflow: hidden;
     border: none;
     pointer-events: auto;
     flex-shrink: 0;
+    background: var(--paper-color);
+    box-shadow: inset 0 0 80px rgba(180,140,80,0.07);
 }
 
 #pageRight {
-    border-radius: 4px 8px 8px 4px;
-    background: linear-gradient(to left, var(--paper-color) 92%, var(--spine-shadow) 100%);
+    border-radius: 4px 10px 10px 4px;
+    background: linear-gradient(to left, var(--paper-color) 88%, var(--spine-shadow) 100%);
     margin-left: -1px;
 }
 
 #pageLeft {
-    border-radius: 8px 4px 4px 8px;
-    background: linear-gradient(to right, var(--paper-color) 92%, var(--spine-shadow) 100%);
+    border-radius: 10px 4px 4px 10px;
+    background: linear-gradient(to right, var(--paper-color) 88%, var(--spine-shadow) 100%);
     margin-right: -1px;
 }
 
-/* --- 5. Image Display & Container --- */
+/* Padding + centering for image mode */
 #pageRight,
 #pageLeft {
-    padding: 1.5rem 1.5rem;
-    box-sizing: border-box;
-    display: flex;
+    padding: 1.5rem;
     align-items: center;
     justify-content: center;
 }
 
+/* --- 5. Quran Image (image render mode) --- */
 .quran-img {
     max-width: 100%;
     max-height: 100%;
@@ -123,23 +147,21 @@ body {
     height: auto;
     object-fit: contain;
     display: block !important;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.35s ease;
     opacity: 0;
-    filter: sepia(0.05) contrast(1.02);
+    filter: sepia(0.12) contrast(1.05) brightness(0.97);
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
+    border-radius: 2px;
 }
 
-.quran-img.loaded {
-    opacity: 1 !important;
-}
+.quran-img.loaded { opacity: 1 !important; }
 
-/* --- 6. Navigation Controls --- */
+/* --- 6. Navigation Zones --- */
 .nav-zone {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: 0; bottom: 0;
     width: 50%;
     z-index: 5;
     display: flex;
@@ -149,30 +171,17 @@ body {
     pointer-events: auto;
 }
 
-.nav-zone.right-0 {
-    right: 0;
-    justify-content: flex-start;
-    padding-right: 1rem;
-}
-
-.nav-zone.left-0 {
-    left: 0;
-    justify-content: flex-end;
-    padding-left: 1rem;
-}
-
-.nav-zone:hover {
-    background: rgba(45, 212, 191, 0.02);
-}
+.nav-zone.right-0 { right: 0; justify-content: flex-start; padding-right: 1rem; }
+.nav-zone.left-0  { left:  0; justify-content: flex-end;   padding-left:  1rem; }
+.nav-zone:hover   { background: rgba(45,212,191,0.025); }
 
 .nav-arrow {
     font-size: 4vw;
-    color: rgba(45, 212, 191, 0.1);
+    color: rgba(45,212,191,0.12);
     transition: all 0.3s ease;
 }
-
 .nav-zone:hover .nav-arrow {
-    color: rgba(45, 212, 191, 0.6);
+    color: rgba(45,212,191,0.55);
     transform: scale(1.2);
 }
 
@@ -189,30 +198,54 @@ body {
     transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
     cursor: pointer;
     clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 90%, 0% 100%);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
     display: flex;
     justify-content: center;
 }
 
-.bookmark-active {
-    transform: translate(-50%, 0px) !important;
+.bookmark-active { transform: translate(-50%, 0px) !important; }
+.bookmark-ahead  { transform: translate(calc(-50% - 240px), -30px) rotate(-5deg) !important; opacity: 0.5; }
+.bookmark-behind { transform: translate(calc(-50% + 240px), -30px) rotate(5deg)  !important; opacity: 0.5; }
+
+/* --- 8. Footer & Input --- */
+.page-footer { padding: 0.5rem; text-align: center; z-index: 20; }
+
+#gotoPageInput::-webkit-inner-spin-button,
+#gotoPageInput::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE
+   ═══════════════════════════════════════════════════════════════ */
+
+#mobileReaderControls {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: linear-gradient(to top, #0b1211 70%, transparent);
+    z-index: 60;
 }
 
-.bookmark-ahead {
-    transform: translate(calc(-50% - 240px), -30px) rotate(-5deg) !important;
-    opacity: 0.6;
+.reader-btn {
+    flex: 1;
+    background: rgba(45,212,191,0.07);
+    border: 1px solid rgba(45,212,191,0.28);
+    color: #2dd4bf;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.18s ease;
 }
+.reader-btn:active { transform: scale(0.95); background: rgba(45,212,191,0.18); }
 
-.bookmark-behind {
-    transform: translate(calc(-50% + 240px), -30px) rotate(5deg) !important;
-    opacity: 0.6;
-}
-
-/* --- 8. Unified Mobile View --- */
 @media (max-width: 768px) {
-    #pageLeft {
-        display: none !important;
-    }
+    #pageLeft { display: none !important; }
 
     #bookContainer {
         width: 100%;
@@ -230,82 +263,49 @@ body {
         max-width: 100% !important;
         margin: 0;
         border-radius: 10px;
-        background: var(--paper-color);
+        background: var(--paper-color) !important;
         padding: 1.2rem 0.8rem;
+        aspect-ratio: 5 / 7 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
     }
 
-    /* In column flex, flex:1 on pageRight fills the container HEIGHT (main axis) */
     #pageRight.mq-text-mode {
-        flex: 1 1 0% !important;
+        flex: 0 0 auto !important;
         min-height: 0 !important;
+        aspect-ratio: 5 / 7 !important;
         align-self: auto !important;
         padding: 16px 14px 14px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
     }
 
-    #bookContainer::after {
-        display: none;
+    #bookContainer {
+        flex: 0 0 auto !important;
+        overflow: visible !important;
     }
+
+    #readerModal > div.flex-1 {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    #bookContainer::after { display: none; }
 
     #physicalBookmark {
-        width: 22px;
-        height: 110px;
-        left: 90% !important;
-        top: -5px;
+        width: 22px; height: 110px;
+        left: 90% !important; top: -5px;
     }
 
-    .bookmark-ahead,
-    .bookmark-behind {
+    .bookmark-ahead, .bookmark-behind {
         transform: translate(-50%, -120px) !important;
         opacity: 0.3;
     }
 }
 
-/* Footer & Input Cleanup */
-.page-footer {
-    padding: 0.5rem;
-    text-align: center;
-    z-index: 20;
-}
-
-#gotoPageInput::-webkit-inner-spin-button,
-#gotoPageInput::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* --- Mobile Reader Controls --- */
-#mobileReaderControls {
-    position: sticky;
-    bottom: 0;
-    display: flex;
-    gap: 12px;
-    padding: 14px;
-    background: linear-gradient(to top, #0b1211 70%, transparent);
-    z-index: 60;
-}
-
-.reader-btn {
-    flex: 1;
-    background: rgba(45, 212, 191, 0.08);
-    border: 1px solid rgba(45, 212, 191, 0.3);
-    color: #2dd4bf;
-    padding: 14px;
-    border-radius: 14px;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-}
-
-.reader-btn:active {
-    transform: scale(0.95);
-    background: rgba(45, 212, 191, 0.2);
-}
-
-/* ══ MQ Text Reader Overrides ═════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   MQ TEXT MODE — layout chain
+   ═══════════════════════════════════════════════════════════════ */
 
 #readerModal > div.flex-1 {
     flex: 1 1 0% !important;
@@ -322,7 +322,6 @@ body {
     display: flex !important;
 }
 
-/* Both pages MUST be equal height — use align-self:stretch */
 #pageRight.mq-text-mode,
 #pageLeft.mq-text-mode {
     align-self: stretch !important;
@@ -333,14 +332,13 @@ body {
     justify-content: flex-start !important;
     overflow: hidden !important;
     position: relative !important;
-    padding: 28px 30px 20px !important;
-    background: linear-gradient(160deg, #fdf8ef 0%, #f5ecda 100%) !important;
+    background: var(--paper-color) !important;
     box-sizing: border-box !important;
+    outline: none;
     border: none !important;
-    outline: none !important;
 }
 
-/* Clear any old pseudo-element borders */
+/* No pseudo-element borders — border-image handles the frame */
 #pageRight.mq-text-mode::before, #pageLeft.mq-text-mode::before,
 #pageRight.mq-text-mode::after,  #pageLeft.mq-text-mode::after {
     content: none !important;
@@ -354,7 +352,16 @@ body {
     box-sizing: border-box !important;
 }
 
-/* single-page-view is desktop-only; mobile is always single-page */
+/* Lone/short lines — centre rather than full-justify */
+.mq-line-lone {
+    text-align: center !important;
+    text-align-last: center !important;
+    text-justify: auto !important;
+}
+
+/* Page number hidden — shown in the border strip instead */
+.mq-page-num { display: none !important; }
+
 @media (max-width: 768px) {
     #bookContainer.single-page-view {
         width: 100% !important;
@@ -362,12 +369,55 @@ body {
     }
 }
 
-/* ── FIX: Short / lone-word lines — center instead of full justify ──────── */
-/* When a line has ≤ 2 words (e.g. a verse end that wraps alone, or "الله"
-   on its own), do NOT stretch it across the full width.  Center it instead,
-   which matches the visual style of a real Mushaf. */
-.mq-line-lone {
-    text-align: center !important;
-    text-align-last: center !important;
-    text-justify: auto !important;
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO BAR
+   ═══════════════════════════════════════════════════════════════ */
+.audio-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(45,212,191,0.12);
+    border-radius: 14px;
+}
+
+.audio-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(45,212,191,0.07);
+    border: 1px solid rgba(45,212,191,0.18);
+    color: #2dd4bf;
+    cursor: pointer;
+    transition: all 0.18s;
+}
+.audio-btn:hover   { background: rgba(45,212,191,0.18); }
+.audio-btn:disabled { opacity: 0.4; cursor: default; }
+
+.audio-play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f9e8e);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 2px 12px rgba(45,212,191,0.35);
+}
+.audio-play:hover { transform: scale(1.07); }
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR
+   ═══════════════════════════════════════════════════════════════ */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(45,212,191,0.3);
+    border-radius: 2px;
 }

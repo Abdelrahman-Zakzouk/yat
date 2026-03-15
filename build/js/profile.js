@@ -47,6 +47,7 @@ const ProfileManager = {
             // 3. Load user specific content
             this.loadFavorites();
             this.loadSavedAyahs();
+            this.loadStreakProgress();
 
         } catch (err) {
             console.error("Initialization Failed:", err);
@@ -247,6 +248,53 @@ const ProfileManager = {
             console.error('Load Saved Ayahs Error:', e);
             showToast('⚠️ فشل تحميل الآيات');
         }
+    },
+
+    toArabicDigits(n) {
+        return String(Math.max(0, Number(n) || 0)).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    },
+
+    getLocalStreakFallback() {
+        try {
+            const raw = localStorage.getItem('Bayani_streak_data');
+            if (!raw) return 0;
+            const parsed = JSON.parse(raw);
+            const n = Number(parsed?.streak);
+            return Number.isFinite(n) ? Math.max(0, n) : 0;
+        } catch {
+            return 0;
+        }
+    },
+
+    async loadStreakProgress() {
+        const streakEl = document.getElementById('streakCount');
+        if (!streakEl) return;
+
+        let streak = this.getLocalStreakFallback();
+
+        try {
+            const sb = window.sbClient || window.sb || window.supabaseClient || window.HadithEngine?.sb;
+            if (!sb || !this.user?.id) {
+                streakEl.innerText = this.toArabicDigits(streak);
+                return;
+            }
+
+            const { data, error } = await sb
+                .from('khatma_progress')
+                .select('streak')
+                .eq('user_id', this.user.id)
+                .eq('is_active', true)
+                .maybeSingle();
+
+            if (!error && data?.streak != null) {
+                const s = Number(data.streak);
+                if (Number.isFinite(s)) streak = Math.max(streak, s);
+            }
+        } catch (e) {
+            console.warn('loadStreakProgress fallback:', e);
+        }
+
+        streakEl.innerText = this.toArabicDigits(streak);
     },
 
     async removeSavedAyah(id) {

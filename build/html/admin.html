@@ -88,15 +88,11 @@
 
     <nav class="fixed top-0 left-0 right-0 bg-[#162927]/90 backdrop-blur-md border-b border-teal-900/50 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <a class="text-4xl font-['Rakkas'] text-teal-400 hover:text-teal-300 transition-colors"
-                href="/index.html">بياني</a>
+            <a href="/index.html" class="text-4xl font-['Rakkas'] text-teal-400 select-none" aria-label="العودة للرئيسية">بياني</a>
 
             <div class="flex items-center gap-4">
-                <button onclick="location.href='/index.html'"
-                    class="hidden md:block text-slate-400 hover:text-teal-400 transition text-sm uppercase tracking-widest">الموقع
-                    الرئيسي</button>
-                <button onclick="openIndex()" class="text-teal-400 text-3xl flex items-center">
-                    <ion-icon name="menu-outline"></ion-icon>
+                <button onclick="openIndex()" class="text-teal-400 text-2xl flex items-center" aria-label="فتح القائمة">
+                    <ion-icon name="grid-outline"></ion-icon>
                 </button>
             </div>
         </div>

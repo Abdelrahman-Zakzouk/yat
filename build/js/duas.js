@@ -7,7 +7,7 @@ const DuaEngine = {
     API_URL: 'https://raw.githubusercontent.com/nawafalqari/azkar-api/56df51279ab6eb86dc2f6202c7de26c8948331c1/azkar.json',
 
     async init() {
-        this.setTimeBasedCategory();
+        this.applyCategory('morning', 0, { scroll: false });
     },
 
     async fetchDuas() {
@@ -118,37 +118,24 @@ const DuaEngine = {
     },
 
     changeCategory(cat, btn, index) {
+        this.applyCategory(cat, index, { scroll: true });
+    },
+
+    applyCategory(cat, index, options = {}) {
+        const { scroll = true } = options;
         const pill = document.getElementById('activePill');
         if (pill) {
             const moveX = index * 100;
             pill.style.transform = `translateX(-${moveX}%)`;
         }
 
-        document.querySelectorAll('.dua-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        const buttons = document.querySelectorAll('.dua-btn');
+        buttons.forEach((b) => b.classList.remove('active'));
+        if (buttons[index]) buttons[index].classList.add('active');
 
         this.currentCategory = cat;
         this.fetchDuas();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-
-    setTimeBasedCategory() {
-        const hour = new Date().getHours();
-        let index = 0;
-
-        if (hour >= 5 && hour < 15) {
-            this.currentCategory = 'morning';
-            index = 0;
-        } else if (hour >= 15 && hour < 21) {
-            this.currentCategory = 'evening';
-            index = 1;
-        } else {
-            this.currentCategory = 'sleep';
-            index = 2;
-        }
-
-        const btns = document.querySelectorAll('.dua-btn');
-        if (btns[index]) this.changeCategory(this.currentCategory, btns[index], index);
+        if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     checkCompletion() {

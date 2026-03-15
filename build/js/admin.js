@@ -30,6 +30,7 @@ let allSurahs = [];
 let confirmedKey = null;
 let adminMode = 'quran';
 let adminCheckInterval = null;
+let statsRefreshInterval = null;
 
 /**
  * 1. SECURITY & HEARTBEAT
@@ -80,6 +81,11 @@ function startHeartbeat() {
 function stopHeartbeat() {
     clearInterval(adminCheckInterval);
     adminCheckInterval = null;
+
+    if (statsRefreshInterval) {
+        clearInterval(statsRefreshInterval);
+        statsRefreshInterval = null;
+    }
 }
 
 /**
@@ -121,7 +127,24 @@ function updateLiveDisplay(verse, hadith) {
 async function initStatsTracking() {
     try {
         const client = await ensureSb();
-        const presenceChannel = client.channel('online-users');
+        const { data: { user } } = await client.auth.getUser();
+
+        const rawSignals = [
+            navigator.userAgent || 'ua_ukn',
+            navigator.platform || 'plt_ukn',
+            navigator.language || 'lang_ukn',
+            Intl.DateTimeFormat().resolvedOptions().timeZone || 'tz_ukn'
+        ].join('|');
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawSignals));
+        const guestHash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+        const guestKey = `g_stb_${guestHash}`;
+
+        // Stable per-user/per-browser key to avoid tab inflation.
+        const presenceKey = user ? `u_${user.id}` : guestKey;
+
+        const presenceChannel = client.channel('online-users', {
+            config: { presence: { key: presenceKey } }
+        });
 
         const updateCount = () => {
             const state = presenceChannel.presenceState();
@@ -132,21 +155,76 @@ async function initStatsTracking() {
 
         presenceChannel
             .on('presence', { event: 'sync' }, updateCount)
-            .subscribe((status) => { if (status === 'SUBSCRIBED') updateCount(); });
+            .subscribe(async (status) => {
+                if (status !== 'SUBSCRIBED') return;
+
+                await presenceChannel.track({
+                    online_at: new Date().toISOString(),
+                    page: window.location.pathname,
+                    scope: 'admin'
+                });
+
+                updateCount();
+            });
 
         fetchTotalVisits();
+        if (!statsRefreshInterval) {
+            statsRefreshInterval = setInterval(fetchTotalVisits, 30000);
+        }
     } catch (e) { console.error("Stats tracking error:", e); }
 }
 
 async function fetchTotalVisits() {
     try {
         const client = await ensureSb();
-        const { data } = await client.from('site_stats').select('count').eq('id', 'total_visits').single();
-        if (data) {
-            const totalEl = document.getElementById('totalVisitsCount');
-            if (totalEl) totalEl.innerText = data.count.toLocaleString();
+
+        let total = null;
+
+        // Unique visits only (no aggregate of arbitrary counters)
+        const uniqueCounterIds = [
+            'total_unique_visits',
+            'unique_visits',
+            'visits_unique',
+            // Legacy projects may store unique visitor count under this id
+            'total_visits'
+        ];
+
+        for (const counterId of uniqueCounterIds) {
+            const { data: row, error } = await client
+                .from('site_stats')
+                .select('count')
+                .eq('id', counterId)
+                .maybeSingle();
+
+            if (error || !row || row.count == null) continue;
+            const n = Number(row.count);
+            if (Number.isFinite(n)) {
+                total = n;
+                break;
+            }
         }
-    } catch (e) { console.error(e); }
+
+        // Hard fallback: derive from source-of-truth table if site_stats rows were deleted.
+        if (!Number.isFinite(total)) {
+            const { count, error: countErr } = await client
+                .from('unique_visits')
+                .select('*', { count: 'exact', head: true });
+
+            if (!countErr && Number.isFinite(Number(count))) {
+                total = Number(count);
+            }
+        }
+
+        const totalEl = document.getElementById('totalVisitsCount');
+        if (totalEl) {
+            if (Number.isFinite(total)) totalEl.innerText = total.toLocaleString();
+            else totalEl.innerText = '0';
+        }
+    } catch (e) {
+        console.error('fetchTotalVisits error:', e);
+        const totalEl = document.getElementById('totalVisitsCount');
+        if (totalEl) totalEl.innerText = '0';
+    }
 }
 
 /**

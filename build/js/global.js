@@ -66,6 +66,31 @@ async function ensureSupabaseClient() {
 // Start ensuring the client immediately
 ensureSupabaseClient();
 
+// 2. VERCEL WEB ANALYTICS (works on Vercel deployments)
+function initVercelAnalytics() {
+    try {
+        const host = window.location.hostname || '';
+        const isLocal = host === 'localhost'
+            || host === '127.0.0.1'
+            || host === '0.0.0.0'
+            || host.endsWith('.local');
+
+        // Avoid local 404 noise and duplicate injections
+        if (isLocal) return;
+        if (document.querySelector('script[data-bayani-vercel-analytics="1"]')) return;
+
+        const script = document.createElement('script');
+        script.src = '/_vercel/insights/script.js';
+        script.defer = true;
+        script.setAttribute('data-bayani-vercel-analytics', '1');
+        document.head.appendChild(script);
+    } catch (e) {
+        console.warn('Vercel Analytics init skipped:', e);
+    }
+}
+
+initVercelAnalytics();
+
 // Promise-based accessor: resolves with `window.sb` when ready
 
 
@@ -82,6 +107,59 @@ const BayaniGlobal = {
     presenceChannel: null,
     onlineCount: 0,
 
+    getDeviceInfo() {
+        const ua = navigator.userAgent || '';
+        const platform = navigator.platform || 'unknown';
+
+        let browser = 'Unknown';
+        if (/edg\//i.test(ua)) browser = 'Edge';
+        else if (/chrome\//i.test(ua) && !/edg\//i.test(ua)) browser = 'Chrome';
+        else if (/safari\//i.test(ua) && !/chrome\//i.test(ua)) browser = 'Safari';
+        else if (/firefox\//i.test(ua)) browser = 'Firefox';
+
+        let deviceModel = 'Desktop';
+        if (/iphone/i.test(ua)) deviceModel = 'iPhone';
+        else if (/ipad/i.test(ua)) deviceModel = 'iPad';
+        else if (/android/i.test(ua)) {
+            // Try extracting Android model, e.g. "SM-S918B" from:
+            // Mozilla/... (Linux; Android 14; SM-S918B Build/...) ...
+            const m = ua.match(/Android\s+[\d.]+;\s*([^;\)]+?)(?:\s+Build\/|\))/i);
+            let candidate = (m && m[1] ? m[1].trim() : 'Android');
+            candidate = candidate.replace(/\b(wv|u|linux)\b/ig, '').trim();
+            if (!candidate || candidate.length < 3) candidate = 'Android';
+            deviceModel = candidate;
+        }
+        else if (/windows/i.test(platform)) deviceModel = 'Windows PC';
+        else if (/mac/i.test(platform)) deviceModel = 'Mac';
+        else if (/linux/i.test(platform)) deviceModel = 'Linux PC';
+
+        return {
+            userAgent: ua,
+            platform,
+            browser,
+            deviceModel,
+            deviceName: `${deviceModel} (${browser})`
+        };
+    },
+
+    async buildVisitorIdentifier() {
+        // DB-first unique id: stable hardware/browser fingerprint only.
+        // This keeps the same visitor_id across normal/incognito on same device
+        // (as long as fingerprint signals are unchanged).
+        const fp = await this.generateFingerprint();
+        return `dev_${fp}`;
+    },
+
+    async buildStableKey() {
+        const fp = await this.generateFingerprint();
+        return `stb_${fp}`;
+    },
+
+    async buildVisitStableKey(user) {
+        if (user?.id) return `usr_${user.id}`;
+        return this.buildStableKey();
+    },
+
     /**
      * Initialize global services
      */
@@ -90,7 +168,8 @@ const BayaniGlobal = {
             await window.getSupabaseClient();
             this.sb = window.sb;
 
-            // ... your other init logic (trackVisit, etc) ...
+            // Track unique visit (guest fingerprint or authenticated user id)
+            await this.trackVisit();
 
             this.initPresence(); // Start the live tracker
             console.log("🌙 Bayani Global: Online");
@@ -100,11 +179,12 @@ const BayaniGlobal = {
     async initPresence() {
         try {
             const { data: { user } } = await this.sb.auth.getUser();
-            // Unique ID per session/tab to ensure accurate live counting
-            const visitorId = user ? `u_${user.id}_${Math.random().toString(36).substring(2, 5)}` : `g_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
+            // Stable presence key: same person/device should not inflate active count across tabs.
+            const stableKey = await this.buildStableKey();
+            const presenceKey = user ? `u_${user.id}` : `g_${stableKey}`;
 
             this.presenceChannel = this.sb.channel('online-users', {
-                config: { presence: { key: visitorId } }
+                config: { presence: { key: presenceKey } }
             });
 
             // Sync event fires whenever someone joins or leaves
@@ -118,7 +198,8 @@ const BayaniGlobal = {
                 if (status === 'SUBSCRIBED') {
                     await this.presenceChannel.track({
                         online_at: new Date().toISOString(),
-                        page: window.location.pathname
+                        page: window.location.pathname,
+                        stable_key: stableKey
                     });
                 }
             });
@@ -145,31 +226,72 @@ const BayaniGlobal = {
      */
     async trackVisit() {
         try {
-            const { data: { user } } = await this.sb.auth.getUser();
-            let visitorId = user ? `u_${user.id}` : `f_${await this.generateFingerprint()}`;
+            const {
+                data: { user }
+            } = await this.sb.auth.getUser();
+            const deviceStableKey = await this.buildStableKey();
+            const visitStableKey = await this.buildVisitStableKey(user);
+            const device = this.getDeviceInfo();
 
-            await this.sb.rpc('increment_visit_count_unique', {
-                visitor_identifier: visitorId
+            // Unified server-side analytics write (visit + metadata) for reliability.
+            const { error: analyticsErr } = await this.sb.rpc('increment_visit_count_unique_v2', {
+                visitor_identifier: visitStableKey,
+                p_device_visitor_id: deviceStableKey,
+                p_user_id: user?.id || null,
+                p_email: user?.email || null,
+                p_device_name: device.deviceName,
+                p_device_model: device.deviceModel,
+                p_browser: device.browser,
+                p_platform: device.platform,
+                p_user_agent: device.userAgent,
+                p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null
             });
+
+            if (analyticsErr) {
+                console.warn('increment_visit_count_unique_v2 failed:', analyticsErr);
+            }
+
+            // Useful for manual checks/debugging in browser console
+            window.BayaniVisitorIdentifier = visitStableKey;
+            window.BayaniDeviceIdentifier = deviceStableKey;
         } catch (e) {
             console.error("Tracking Failure:", e);
         }
     },
 
     async generateFingerprint() {
-        const hardwareInfo = [
-            navigator.hardwareConcurrency,
-            navigator.deviceMemory || "ukn",
-            screen.width + "x" + screen.height,
-            new Date().getTimezoneOffset(),
-            navigator.platform
+        const stableSignals = [
+            navigator.userAgent || 'ua_ukn',
+            navigator.platform || 'plt_ukn',
+            navigator.language || 'lang_ukn',
+            Intl.DateTimeFormat().resolvedOptions().timeZone || 'tz_ukn'
         ].join('|');
 
-        const encoder = new TextEncoder();
-        const data = encoder.encode(hardwareInfo);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+        // Primary path: Web Crypto SHA-256
+        try {
+            if (window.crypto?.subtle && typeof TextEncoder !== 'undefined') {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(stableSignals);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+            }
+        } catch (e) {
+            console.warn('Fingerprint crypto path failed, using fallback hash:', e);
+        }
+
+        // Fallback path for older/mobile webviews without subtle crypto
+        let h1 = 5381;
+        let h2 = 52711;
+        for (let i = 0; i < stableSignals.length; i++) {
+            const c = stableSignals.charCodeAt(i);
+            h1 = ((h1 << 5) + h1) ^ c;
+            h2 = ((h2 << 5) + h2) ^ (c * 33);
+        }
+        const p1 = (h1 >>> 0).toString(16).padStart(8, '0');
+        const p2 = (h2 >>> 0).toString(16).padStart(8, '0');
+        const raw = `${p1}${p2}${p1}${p2}`;
+        return raw.substring(0, 32);
     }
 };
 
@@ -370,7 +492,8 @@ function dismissPWA() {
 
 // Check if app is already launched in standalone mode
 if (window.matchMedia('(display-mode: standalone)').matches) {
-    pwaBanner?.classList.add('hidden');
+    const pwaBannerEl = document.getElementById('pwa-banner');
+    pwaBannerEl?.classList.add('hidden');
 }
 
 
