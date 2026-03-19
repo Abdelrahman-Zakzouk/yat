@@ -404,7 +404,7 @@ async function checkActiveKhatma() {
 
         const { data } = await window.sb
             .from('khatma_progress')
-            .select('last_verse_key, last_page')
+            .select('last_verse_key, last_page, current_page')
             .eq('user_id', user.id)
             .eq('is_active', true)
             .maybeSingle();
@@ -414,11 +414,16 @@ async function checkActiveKhatma() {
             const text = document.getElementById('resumeStatusText');
             if (widget && text) {
                 widget.classList.remove('hidden');
-                if (data.last_verse_key && data.last_verse_key.startsWith('page:')) {
+                // Helper function to convert numbers to Arabic numerals
+                const toArabicNum = (n) => n.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+                
+                // Prioritize current_page for most accurate display
+                const pageNum = data.current_page || data.last_page;
+                if (pageNum) {
+                    text.innerText = `وصلت إلى صفحة ${toArabicNum(pageNum)}`;
+                } else if (data.last_verse_key && data.last_verse_key.startsWith('page:')) {
                     const p = parseInt(data.last_verse_key.split(':')[1]);
-                    text.innerText = `وصلت إلى صفحة ${p}`;
-                } else if (data.last_page) {
-                    text.innerText = `وصلت إلى صفحة ${data.last_page}`;
+                    text.innerText = `وصلت إلى صفحة ${toArabicNum(p)}`;
                 } else if (data.last_verse_key) {
                     const [sNum] = data.last_verse_key.split(':');
                     let surahName = '';
